@@ -14,6 +14,8 @@ from scorer import calculate_riel_score
 
 load_dotenv()
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 BELVO_SECRET_ID = os.getenv("BELVO_SECRET_ID")
 BELVO_SECRET_PASSWORD = os.getenv("BELVO_SECRET_PASSWORD")
 BELVO_ENV = os.getenv("BELVO_ENV", "sandbox")
@@ -57,7 +59,7 @@ def belvo_token():
 def score(request: ScoreRequest):
     t_start = time.time()
 
-    with open("sample_transactions.json") as f:
+    with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
         transactions = json.load(f)
 
     features = extract_features(transactions)
@@ -94,7 +96,7 @@ def create_widget_session():
 
 @app.get("/connect")
 def connect():
-    return FileResponse("connect.html")
+    return FileResponse(os.path.join(BASE_DIR, "connect.html"))
 
 
 @app.get("/health")
