@@ -6,6 +6,7 @@ import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from features import extract_features
@@ -74,6 +75,26 @@ def score(request: ScoreRequest):
         "data_cost_usd": 0.08,
         "latency_ms": latency_ms,
     }
+
+
+@app.post("/create-widget-session")
+def create_widget_session():
+    response = requests.post(
+        f"{BELVO_BASE_URL}/api/token/",
+        json={
+            "id": BELVO_SECRET_ID,
+            "password": BELVO_SECRET_PASSWORD,
+            "scopes": "read_institutions,read_links,write_links",
+        },
+    )
+    if response.status_code not in (200, 201):
+        raise HTTPException(status_code=response.status_code, detail=response.json())
+    return response.json()
+
+
+@app.get("/connect")
+def connect():
+    return FileResponse("connect.html")
 
 
 @app.get("/health")
