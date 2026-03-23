@@ -3,279 +3,458 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riél — Credit Intelligence</title>
+  <title>Riél — Credit Intelligence Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #080808;
+      --surface:  #111111;
+      --border:   #1e1e1e;
+      --border2:  #2a2a2a;
+      --text:     #e2e2e2;
+      --muted:    #555;
+      --accent:   #7c6aff;
+      --accent-d: #5a4fd4;
+      --green:    #4ade80;
+      --yellow:   #facc15;
+      --red:      #f87171;
+    }
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      background: #0d0d0d;
-      color: #e8e8e8;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px 20px;
+      padding: 40px 24px 64px;
     }
 
+    /* ─── Header ─────────────────────────────────────────── */
     header {
       text-align: center;
       margin-bottom: 48px;
     }
 
-    header .wordmark {
-      font-size: 2rem;
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800; color: #fff;
+    }
+
+    .logo-name {
+      font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: -0.5px;
-      color: #ffffff;
+      color: #fff;
     }
 
-    header .wordmark span {
-      color: #7c6aff;
-    }
-
-    header .tagline {
-      font-size: 0.85rem;
-      color: #555;
-      margin-top: 6px;
-      letter-spacing: 0.08em;
+    .header-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      letter-spacing: 0.12em;
       text-transform: uppercase;
     }
 
-    .card {
-      background: #161616;
-      border: 1px solid #222;
-      border-radius: 16px;
-      padding: 36px;
-      width: 100%;
-      max-width: 560px;
+    /* ─── Two-panel grid ─────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1080px;
+      margin: 0 auto;
     }
 
-    .card + .card { margin-top: 20px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
 
+    /* ─── Panel card ─────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .icon-standard { background: #1a1a2e; color: var(--accent); }
+    .icon-agent    { background: #1a2a1a; color: var(--green); }
+
+    .panel-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .panel-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ─── Form controls ──────────────────────────────────── */
     label {
       display: block;
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       font-weight: 500;
-      color: #666;
-      letter-spacing: 0.06em;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .input-row { display: flex; gap: 8px; }
+
+    input[type="text"], input[type="number"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--accent); }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-standard { background: var(--accent); color: #fff; }
+    .btn-standard:hover:not(:disabled) { background: var(--accent-d); }
+    .btn-agent    { background: #1e3a1e; color: var(--green); border: 1px solid #2a4a2a; }
+    .btn-agent:hover:not(:disabled) { background: #254525; }
+
+    .err {
+      background: #1e0e0e;
+      border: 1px solid #3a1515;
+      border-radius: 8px;
+      color: #e07070;
+      font-size: 0.82rem;
+      padding: 10px 14px;
+      display: none;
+    }
+
+    /* ─── x402 flow animation ────────────────────────────── */
+    .flow {
+      display: none;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .flow.visible { display: flex; }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: #333;
+      transition: color 0.3s;
+      white-space: nowrap;
+    }
+
+    .flow-step.active { color: var(--green); }
+    .flow-step.done   { color: #3a6a3a; }
+
+    .flow-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #222;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    .flow-step.active .flow-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .flow-step.done   .flow-dot { background: #3a6a3a; }
+
+    .flow-arrow { color: #252525; font-size: 0.7rem; flex-shrink: 0; }
+    .flow-step.active ~ .flow-arrow,
+    .flow-step.done   ~ .flow-arrow { color: #2a4a2a; }
+
+    /* ─── Score display ──────────────────────────────────── */
+    .result { display: none; }
+
+    .score-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .score-num {
+      font-size: 4.5rem;
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1;
+    }
+
+    .score-num.green  { color: var(--green); }
+    .score-num.yellow { color: var(--yellow); }
+    .score-num.red    { color: var(--red); }
+
+    .score-of {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 6px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-top: 6px;
+    }
+
+    .badge.approve { background: #0e2218; color: var(--green);  border: 1px solid #1a3a28; }
+    .badge.review  { background: #221e00; color: var(--yellow); border: 1px solid #3a3200; }
+    .badge.decline { background: #220e0e; color: var(--red);    border: 1px solid #3a1818; }
+
+    /* ─── Meta pills ─────────────────────────────────────── */
+    .pills { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .pill {
+      background: #161616;
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #888;
+      padding: 5px 10px;
+    }
+
+    .pill strong { color: #ccc; }
+
+    /* ─── Feature table ──────────────────────────────────── */
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
 
-    .input-row {
+    table { width: 100%; border-collapse: collapse; }
+    tr { border-bottom: 1px solid #161616; }
+    tr:last-child { border-bottom: none; }
+    td { padding: 8px 4px; font-size: 0.83rem; }
+    td:first-child { color: #666; }
+    td:last-child  { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .bar-wrap { width: 60px; }
+    .bar-bg { background: #1a1a1a; border-radius: 3px; height: 5px; overflow: hidden; }
+    .bar-fill { background: var(--accent); height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
+    /* ─── Agent metadata box ─────────────────────────────── */
+    .agent-meta {
+      background: #0c180c;
+      border: 1px solid #1a3a1a;
+      border-radius: 10px;
+      padding: 14px 16px;
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    input[type="text"] {
-      flex: 1;
-      background: #0d0d0d;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      color: #e8e8e8;
-      font-family: inherit;
-      font-size: 0.95rem;
-      padding: 12px 16px;
-      outline: none;
-      transition: border-color 0.2s;
+    .agent-meta-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #4a7a4a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
     }
 
-    input[type="text"]:focus { border-color: #7c6aff; }
-
-    button {
-      background: #7c6aff;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 0.9rem;
-      font-weight: 600;
-      padding: 12px 22px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s, opacity 0.2s;
-    }
-
-    button:hover    { background: #6a58e8; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    #error {
-      display: none;
-      margin-top: 14px;
-      background: #1e0f0f;
-      border: 1px solid #4a1a1a;
-      border-radius: 8px;
-      color: #e07070;
-      font-size: 0.85rem;
-      padding: 12px 16px;
-    }
-
-    /* ── Result card ── */
-    #result { display: none; }
-
-    .score-row {
+    .agent-meta-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 28px;
+      font-size: 0.82rem;
     }
 
-    .score-block { line-height: 1; }
+    .agent-meta-row .key { color: #3a6a3a; }
+    .agent-meta-row .val { color: var(--green); font-weight: 600; }
 
-    .score-number {
-      font-size: 5rem;
+    .auto-badge {
+      background: #0e2e0e;
+      border: 1px solid #1e4e1e;
+      color: var(--green);
+      font-size: 0.68rem;
       font-weight: 700;
-      letter-spacing: -2px;
-    }
-
-    .score-number.green  { color: #4ade80; }
-    .score-number.yellow { color: #facc15; }
-    .score-number.red    { color: #f87171; }
-
-    .score-label {
-      font-size: 0.75rem;
-      color: #444;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-top: 4px;
-    }
-
-    .badge {
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 8px 18px;
-      border-radius: 100px;
-    }
-
-    .badge.approve { background: #0f2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
-    .badge.review  { background: #2a2000; color: #facc15; border: 1px solid #4a3a00; }
-    .badge.decline { background: #2a0f0f; color: #f87171; border: 1px solid #4a1a1a; }
-
-    .meta-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 28px;
-    }
-
-    .meta-pill {
-      background: #1c1c1c;
-      border: 1px solid #272727;
-      border-radius: 8px;
-      font-size: 0.78rem;
-      color: #888;
-      padding: 7px 14px;
-    }
-
-    .meta-pill strong { color: #bbb; }
-
-    .section-title {
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #444;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    tr { border-bottom: 1px solid #1e1e1e; }
-    tr:last-child { border-bottom: none; }
-
-    td {
-      padding: 10px 4px;
-      font-size: 0.88rem;
-    }
-
-    td:first-child { color: #666; }
-    td:last-child  { text-align: right; color: #e8e8e8; font-variant-numeric: tabular-nums; }
-
-    .bar-cell { width: 80px; padding-right: 0; }
-
-    .bar-bg {
-      background: #1e1e1e;
-      border-radius: 4px;
-      height: 6px;
-      width: 80px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      background: #7c6aff;
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.6s ease;
-    }
-
-    .demo-tag {
-      display: inline-block;
-      background: #1a1a2e;
-      border: 1px solid #2e2e50;
-      color: #7c6aff;
-      font-size: 0.7rem;
-      font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       padding: 3px 10px;
       border-radius: 100px;
-      margin-left: 10px;
-      vertical-align: middle;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
     }
 
     footer {
-      margin-top: 40px;
-      font-size: 0.75rem;
-      color: #333;
+      text-align: center;
+      margin-top: 48px;
+      font-size: 0.72rem;
+      color: #252525;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="wordmark">Ri<span>é</span>l</div>
-    <div class="tagline">B2B Credit Intelligence · LATAM</div>
+    <div class="logo">
+      <div class="logo-mark">R</div>
+      <div class="logo-name">Riél</div>
+    </div>
+    <div class="header-sub">B2B Credit Intelligence · LATAM · v0.1.0</div>
   </header>
 
-  <!-- Input card -->
-  <div class="card">
-    <label for="linkInput">Belvo Link ID</label>
-    <div class="input-row">
-      <input type="text" id="linkInput" value="demo" placeholder="Enter link_id or 'demo'" />
-      <button id="scoreBtn" onclick="runScore()">Get Credit Score</button>
-    </div>
-    <div id="error"></div>
-  </div>
+  <div class="grid">
 
-  <!-- Result card -->
-  <div class="card" id="result">
-    <div class="score-row">
-      <div class="score-block">
-        <div class="score-number" id="scoreNum">—</div>
-        <div class="score-label">Riel Score <span style="color:#333">/ 100</span></div>
+    <!-- ── LEFT: Standard Score ───────────────────────── -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon icon-standard">◈</div>
+        <div>
+          <div class="panel-title">Standard Score</div>
+          <div class="panel-desc">POST /score · Belvo transaction data</div>
+        </div>
       </div>
-      <span class="badge" id="badge">—</span>
+
+      <div>
+        <label for="s-link">Link ID</label>
+        <div class="input-row">
+          <input type="text" id="s-link" value="demo" />
+          <button class="btn btn-standard" id="s-btn" onclick="runStandard()">Get Score</button>
+        </div>
+      </div>
+
+      <div class="err" id="s-err"></div>
+
+      <div class="result" id="s-result">
+        <div class="score-row">
+          <div>
+            <div class="score-num" id="s-num">—</div>
+            <div class="score-of">Riél Score / 100</div>
+          </div>
+          <span class="badge" id="s-badge">—</span>
+        </div>
+
+        <div class="divider" style="margin: 16px 0 14px;"></div>
+
+        <div class="pills" id="s-pills" style="margin-bottom:16px;"></div>
+
+        <div class="section-label">Signal Features</div>
+        <table id="s-table"></table>
+      </div>
     </div>
 
-    <div class="meta-row">
-      <div class="meta-pill">Limit: <strong id="metaLimit">—</strong></div>
-      <div class="meta-pill">Confidence: <strong id="metaConf">—</strong></div>
-      <div class="meta-pill">Latency: <strong id="metaLatency">—</strong></div>
-      <div class="meta-pill">Cost: <strong id="metaCost">—</strong></div>
+    <!-- ── RIGHT: Autonomous Agent ────────────────────── -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon icon-agent">⚡</div>
+        <div>
+          <div class="panel-title">Autonomous Agent <span class="auto-badge">x402</span></div>
+          <div class="panel-desc">POST /agent/procure · self-paying data pipeline</div>
+        </div>
+      </div>
+
+      <div>
+        <label for="a-amount">Requested Amount (COP)</label>
+        <div class="input-row">
+          <input type="number" id="a-amount" value="5000000" />
+          <button class="btn btn-agent" id="a-btn" onclick="runAgent()">Run Agent</button>
+        </div>
+      </div>
+
+      <div class="flow" id="a-flow">
+        <div class="flow-step" id="fs-0"><div class="flow-dot"></div>Challenge</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="fs-1"><div class="flow-dot"></div>$0.08 paid</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="fs-2"><div class="flow-dot"></div>Data fetched</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" id="fs-3"><div class="flow-dot"></div>Scored</div>
+      </div>
+
+      <div class="err" id="a-err"></div>
+
+      <div class="result" id="a-result">
+        <div class="score-row">
+          <div>
+            <div class="score-num" id="a-num">—</div>
+            <div class="score-of">Riél Score / 100</div>
+          </div>
+          <span class="badge" id="a-badge">—</span>
+        </div>
+
+        <div class="divider" style="margin: 16px 0 14px;"></div>
+
+        <div class="agent-meta" id="a-meta">
+          <div class="agent-meta-title">⚡ Agent Metadata</div>
+          <div class="agent-meta-row"><span class="key">data_source</span><span class="val" id="am-source">—</span></div>
+          <div class="agent-meta-row"><span class="key">payment_usd</span><span class="val" id="am-payment">—</span></div>
+          <div class="agent-meta-row"><span class="key">autonomous</span><span class="val" id="am-auto">—</span></div>
+          <div class="agent-meta-row"><span class="key">latency_ms</span><span class="val" id="am-latency">—</span></div>
+        </div>
+
+        <div style="margin: 14px 0;">
+          <div class="pills" id="a-pills"></div>
+        </div>
+
+        <div class="section-label">Signal Features</div>
+        <table id="a-table"></table>
+      </div>
     </div>
 
-    <div class="section-title" id="featTitle">Signal features</div>
-    <table id="featureTable"></table>
-  </div>
+  </div><!-- /grid -->
 
-  <footer>Riél API v0.1.0 · Sandbox</footer>
+  <footer>Riél API · Sandbox · LATAM informal credit scoring</footer>
 
   <script>
     const FEATURE_LABELS = {
@@ -286,94 +465,140 @@
       repayment_proxy:        "Repayment proxy",
       tenure_days:            "Tenure (days)",
     };
+    const FLOAT_FEATURES = new Set(["payment_consistency","merchant_ratio","income_stability"]);
 
-    // Features that are 0-1 floats (get a bar); others displayed as-is
-    const FLOAT_FEATURES = new Set([
-      "payment_consistency", "merchant_ratio", "income_stability"
-    ]);
+    function scoreColor(n) { return n > 65 ? "green" : n >= 40 ? "yellow" : "red"; }
 
-    async function runScore() {
-      const btn   = document.getElementById("scoreBtn");
-      const errEl = document.getElementById("error");
-      const link  = document.getElementById("linkInput").value.trim();
-
-      btn.disabled = true;
-      btn.textContent = "Scoring…";
-      errEl.style.display = "none";
-      document.getElementById("result").style.display = "none";
-
-      let data;
-      try {
-        const res = await fetch("/score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ link_id: link }),
-        });
-        data = await res.json();
-        if (!res.ok) throw new Error(data.detail ?? JSON.stringify(data));
-      } catch (e) {
-        errEl.textContent = "Error: " + e.message;
-        errEl.style.display = "block";
-        btn.disabled = false;
-        btn.textContent = "Get Credit Score";
-        return;
-      }
-
-      renderResult(data);
-      btn.disabled = false;
-      btn.textContent = "Get Credit Score";
-    }
-
-    function renderResult(data) {
-      const score = data.riel_score;
-
-      // Score number + colour
-      const numEl = document.getElementById("scoreNum");
-      numEl.textContent = score;
-      numEl.className = "score-number " + (score > 65 ? "green" : score >= 40 ? "yellow" : "red");
-
-      // Badge
-      const badgeEl = document.getElementById("badge");
-      badgeEl.textContent = data.recommendation.toUpperCase();
-      badgeEl.className = "badge " + data.recommendation;
-
-      // Meta pills
-      const fmt = new Intl.NumberFormat("es-CO");
-      document.getElementById("metaLimit").textContent =
-        data.suggested_limit_cop > 0 ? "COP " + fmt.format(data.suggested_limit_cop) : "—";
-      document.getElementById("metaConf").textContent = data.confidence;
-      document.getElementById("metaLatency").textContent = data.latency_ms + " ms";
-      document.getElementById("metaCost").textContent = "$" + data.data_cost_usd.toFixed(2);
-
-      // Demo tag on section title
-      const featTitle = document.getElementById("featTitle");
-      featTitle.innerHTML = "Signal features"
-        + (data.demo ? '<span class="demo-tag">demo data</span>' : "");
-
-      // Feature table
-      const table = document.getElementById("featureTable");
-      table.innerHTML = "";
-      for (const [key, val] of Object.entries(data.features)) {
+    function renderFeatureTable(tableEl, features) {
+      tableEl.innerHTML = "";
+      for (const [key, val] of Object.entries(features)) {
         const label = FEATURE_LABELS[key] ?? key;
         const tr = document.createElement("tr");
-
         if (FLOAT_FEATURES.has(key)) {
           const pct = Math.round(val * 100);
-          tr.innerHTML = `
-            <td>${label}</td>
-            <td class="bar-cell">
-              <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
-            </td>
+          tr.innerHTML = `<td>${label}</td>
+            <td class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></td>
             <td>${pct}%</td>`;
         } else if (key === "repayment_proxy") {
           tr.innerHTML = `<td>${label}</td><td></td><td>${val ? "✓ Yes" : "✗ No"}</td>`;
         } else {
           tr.innerHTML = `<td>${label}</td><td></td><td>${val}</td>`;
         }
-        table.appendChild(tr);
+        tableEl.appendChild(tr);
+      }
+    }
+
+    function renderPills(el, items) {
+      el.innerHTML = items.map(([k,v]) =>
+        `<div class="pill">${k}: <strong>${v}</strong></div>`
+      ).join("");
+    }
+
+    // ── Standard score ───────────────────────────────────────
+    async function runStandard() {
+      const btn = document.getElementById("s-btn");
+      const errEl = document.getElementById("s-err");
+      btn.disabled = true; btn.textContent = "Scoring…";
+      errEl.style.display = "none";
+      document.getElementById("s-result").style.display = "none";
+
+      let data;
+      try {
+        const r = await fetch("/score", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({link_id: document.getElementById("s-link").value.trim()}),
+        });
+        data = await r.json();
+        if (!r.ok) throw new Error(data.detail ?? JSON.stringify(data));
+      } catch(e) {
+        errEl.textContent = e.message; errEl.style.display = "block";
+        btn.disabled = false; btn.textContent = "Get Score"; return;
       }
 
-      document.getElementById("result").style.display = "block";
+      document.getElementById("s-num").textContent = data.riel_score;
+      document.getElementById("s-num").className = "score-num " + scoreColor(data.riel_score);
+      const b = document.getElementById("s-badge");
+      b.textContent = data.recommendation.toUpperCase(); b.className = "badge " + data.recommendation;
+
+      const fmt = new Intl.NumberFormat("es-CO");
+      renderPills(document.getElementById("s-pills"), [
+        ["Confidence", data.confidence],
+        ["Limit", data.suggested_limit_cop > 0 ? "COP " + fmt.format(data.suggested_limit_cop) : "—"],
+        ["Latency", data.latency_ms + " ms"],
+        ["Cost", "$" + data.data_cost_usd.toFixed(2)],
+      ]);
+      renderFeatureTable(document.getElementById("s-table"), data.features);
+      document.getElementById("s-result").style.display = "block";
+      btn.disabled = false; btn.textContent = "Get Score";
+    }
+
+    // ── Agent (x402) ─────────────────────────────────────────
+    const FLOW_STEPS = ["fs-0","fs-1","fs-2","fs-3"];
+
+    function resetFlow() {
+      FLOW_STEPS.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove("active","done");
+      });
+    }
+
+    async function animateFlow(durationMs) {
+      const stepMs = durationMs / FLOW_STEPS.length;
+      for (let i = 0; i < FLOW_STEPS.length; i++) {
+        if (i > 0) document.getElementById(FLOW_STEPS[i-1]).classList.replace("active","done");
+        document.getElementById(FLOW_STEPS[i]).classList.add("active");
+        await new Promise(r => setTimeout(r, stepMs));
+      }
+      document.getElementById(FLOW_STEPS[FLOW_STEPS.length-1]).classList.replace("active","done");
+    }
+
+    async function runAgent() {
+      const btn = document.getElementById("a-btn");
+      const errEl = document.getElementById("a-err");
+      btn.disabled = true; btn.textContent = "Running…";
+      errEl.style.display = "none";
+      document.getElementById("a-result").style.display = "none";
+
+      resetFlow();
+      document.getElementById("a-flow").classList.add("visible");
+
+      let data;
+      const fetchPromise = fetch("/agent/procure", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({requested_amount_cop: parseFloat(document.getElementById("a-amount").value)}),
+      }).then(r => r.json().then(d => ({ok: r.ok, data: d})));
+
+      const animPromise = animateFlow(900);
+      const [{ok, data: d}] = await Promise.all([fetchPromise, animPromise]);
+      data = d;
+
+      if (!ok) {
+        errEl.textContent = data.detail ?? JSON.stringify(data);
+        errEl.style.display = "block";
+        btn.disabled = false; btn.textContent = "Run Agent"; return;
+      }
+
+      document.getElementById("a-num").textContent = data.riel_score;
+      document.getElementById("a-num").className = "score-num " + scoreColor(data.riel_score);
+      const b = document.getElementById("a-badge");
+      b.textContent = data.recommendation.toUpperCase(); b.className = "badge " + data.recommendation;
+
+      document.getElementById("am-source").textContent  = data.data_source;
+      document.getElementById("am-payment").textContent = "$" + data.payment_usd.toFixed(2) + " USD";
+      document.getElementById("am-auto").textContent    = data.autonomous ? "✓ true" : "false";
+      document.getElementById("am-latency").textContent = data.latency_ms + " ms";
+
+      const fmt = new Intl.NumberFormat("es-CO");
+      renderPills(document.getElementById("a-pills"), [
+        ["Confidence", data.confidence],
+        ["Limit", data.suggested_limit_cop > 0 ? "COP " + fmt.format(data.suggested_limit_cop) : "—"],
+        ["Requested", "COP " + fmt.format(data.requested_amount_cop)],
+      ]);
+      renderFeatureTable(document.getElementById("a-table"), data.features);
+      document.getElementById("a-result").style.display = "block";
+      btn.disabled = false; btn.textContent = "Run Agent";
     }
   </script>
 </body>
