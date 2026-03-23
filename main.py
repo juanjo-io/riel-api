@@ -29,7 +29,6 @@ BELVO_BASE_URL = "https://sandbox.belvo.com"
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 MPP_SECRET = os.getenv("STRIPE_MPP_SECRET", secrets.token_hex(32))
-SELF_BASE_URL = os.getenv("SELF_BASE_URL", "http://localhost:8000")
 
 COP_TO_USD = 4000  # 1 USD ≈ 4 000 COP (fixed rate for sandbox)
 
@@ -231,33 +230,23 @@ def data_transactions(authorization: Optional[str] = Header(default=None)):
 @app.post("/agent/procure")
 def agent_procure(request: ProcureRequest):
     """
-    Autonomously procures transaction data via the x402 /data/transactions
-    endpoint, pays the $0.08 SPT challenge, scores the data, and returns
-    the credit decision.
+    Autonomously procures transaction data via the x402 challenge/response
+    protocol, scores it, and returns the credit decision.
+    The 402 handshake runs in-process to avoid self-HTTP calls that break
+    in deployed environments without a SELF_BASE_URL.
     """
     t_start = time.time()
-    url = f"{SELF_BASE_URL}/data/transactions"
 
-    # Step 1 — attempt without credential
-    r1 = requests.get(url)
+    # Step 1 — attempt without credential (no token → always 402 in-process)
+    challenge_id = _make_challenge_id()
+    print(f"[procure] 402 received — paying for data... (challengeId: {challenge_id[:16]}…)")
 
-    if r1.status_code == 402:
-        challenge = r1.json()
-        challenge_id = challenge.get("challengeId")
-        print(f"[procure] 402 received — paying for data... (challengeId: {challenge_id[:16]}…)")
+    # Step 2 — verify the challenge (simulates SPT payment + retry)
+    if not _verify_challenge_id(challenge_id):
+        raise HTTPException(status_code=502, detail="x402 challenge verification failed.")
 
-        # Step 2 — retry with the challengeId as Bearer token (simulates SPT payment)
-        r2 = requests.get(url, headers={"Authorization": f"Bearer {challenge_id}"})
-
-        if r2.status_code != 200:
-            raise HTTPException(status_code=502, detail="Data provider rejected payment credential.")
-        payload = r2.json()
-    elif r1.status_code == 200:
-        payload = r1.json()
-    else:
-        raise HTTPException(status_code=502, detail=f"Data provider error: {r1.status_code}")
-
-    transactions = payload["transactions"]
+    with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
+        transactions = json.load(f)
     print(f"[procure] {len(transactions)} transactions acquired.")
 
     # Step 3 — score
