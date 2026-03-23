@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riél — Credit Intelligence</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #0d0d0d;
+      color: #e8e8e8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header .wordmark {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+
+    header .wordmark span {
+      color: #7c6aff;
+    }
+
+    header .tagline {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: #161616;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .card + .card { margin-top: 20px; }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #666;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: #0d0d0d;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 12px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus { border-color: #7c6aff; }
+
+    button {
+      background: #7c6aff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 12px 22px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    button:hover    { background: #6a58e8; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #error {
+      display: none;
+      margin-top: 14px;
+      background: #1e0f0f;
+      border: 1px solid #4a1a1a;
+      border-radius: 8px;
+      color: #e07070;
+      font-size: 0.85rem;
+      padding: 12px 16px;
+    }
+
+    /* ── Result card ── */
+    #result { display: none; }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .score-block { line-height: 1; }
+
+    .score-number {
+      font-size: 5rem;
+      font-weight: 700;
+      letter-spacing: -2px;
+    }
+
+    .score-number.green  { color: #4ade80; }
+    .score-number.yellow { color: #facc15; }
+    .score-number.red    { color: #f87171; }
+
+    .score-label {
+      font-size: 0.75rem;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 100px;
+    }
+
+    .badge.approve { background: #0f2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
+    .badge.review  { background: #2a2000; color: #facc15; border: 1px solid #4a3a00; }
+    .badge.decline { background: #2a0f0f; color: #f87171; border: 1px solid #4a1a1a; }
+
+    .meta-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .meta-pill {
+      background: #1c1c1c;
+      border: 1px solid #272727;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      color: #888;
+      padding: 7px 14px;
+    }
+
+    .meta-pill strong { color: #bbb; }
+
+    .section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #444;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    tr { border-bottom: 1px solid #1e1e1e; }
+    tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 10px 4px;
+      font-size: 0.88rem;
+    }
+
+    td:first-child { color: #666; }
+    td:last-child  { text-align: right; color: #e8e8e8; font-variant-numeric: tabular-nums; }
+
+    .bar-cell { width: 80px; padding-right: 0; }
+
+    .bar-bg {
+      background: #1e1e1e;
+      border-radius: 4px;
+      height: 6px;
+      width: 80px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      background: #7c6aff;
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+
+    .demo-tag {
+      display: inline-block;
+      background: #1a1a2e;
+      border: 1px solid #2e2e50;
+      color: #7c6aff;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    footer {
+      margin-top: 40px;
+      font-size: 0.75rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wordmark">Ri<span>é</span>l</div>
+    <div class="tagline">B2B Credit Intelligence · LATAM</div>
+  </header>
+
+  <!-- Input card -->
+  <div class="card">
+    <label for="linkInput">Belvo Link ID</label>
+    <div class="input-row">
+      <input type="text" id="linkInput" value="demo" placeholder="Enter link_id or 'demo'" />
+      <button id="scoreBtn" onclick="runScore()">Get Credit Score</button>
+    </div>
+    <div id="error"></div>
+  </div>
+
+  <!-- Result card -->
+  <div class="card" id="result">
+    <div class="score-row">
+      <div class="score-block">
+        <div class="score-number" id="scoreNum">—</div>
+        <div class="score-label">Riel Score <span style="color:#333">/ 100</span></div>
+      </div>
+      <span class="badge" id="badge">—</span>
+    </div>
+
+    <div class="meta-row">
+      <div class="meta-pill">Limit: <strong id="metaLimit">—</strong></div>
+      <div class="meta-pill">Confidence: <strong id="metaConf">—</strong></div>
+      <div class="meta-pill">Latency: <strong id="metaLatency">—</strong></div>
+      <div class="meta-pill">Cost: <strong id="metaCost">—</strong></div>
+    </div>
+
+    <div class="section-title" id="featTitle">Signal features</div>
+    <table id="featureTable"></table>
+  </div>
+
+  <footer>Riél API v0.1.0 · Sandbox</footer>
+
+  <script>
+    const FEATURE_LABELS = {
+      payment_consistency:    "Payment consistency",
+      counterparty_diversity: "Counterparty diversity",
+      merchant_ratio:         "Merchant ratio",
+      income_stability:       "Income stability",
+      repayment_proxy:        "Repayment proxy",
+      tenure_days:            "Tenure (days)",
+    };
+
+    // Features that are 0-1 floats (get a bar); others displayed as-is
+    const FLOAT_FEATURES = new Set([
+      "payment_consistency", "merchant_ratio", "income_stability"
+    ]);
+
+    async function runScore() {
+      const btn   = document.getElementById("scoreBtn");
+      const errEl = document.getElementById("error");
+      const link  = document.getElementById("linkInput").value.trim();
+
+      btn.disabled = true;
+      btn.textContent = "Scoring…";
+      errEl.style.display = "none";
+      document.getElementById("result").style.display = "none";
+
+      let data;
+      try {
+        const res = await fetch("/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ link_id: link }),
+        });
+        data = await res.json();
+        if (!res.ok) throw new Error(data.detail ?? JSON.stringify(data));
+      } catch (e) {
+        errEl.textContent = "Error: " + e.message;
+        errEl.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "Get Credit Score";
+        return;
+      }
+
+      renderResult(data);
+      btn.disabled = false;
+      btn.textContent = "Get Credit Score";
+    }
+
+    function renderResult(data) {
+      const score = data.riel_score;
+
+      // Score number + colour
+      const numEl = document.getElementById("scoreNum");
+      numEl.textContent = score;
+      numEl.className = "score-number " + (score > 65 ? "green" : score >= 40 ? "yellow" : "red");
+
+      // Badge
+      const badgeEl = document.getElementById("badge");
+      badgeEl.textContent = data.recommendation.toUpperCase();
+      badgeEl.className = "badge " + data.recommendation;
+
+      // Meta pills
+      const fmt = new Intl.NumberFormat("es-CO");
+      document.getElementById("metaLimit").textContent =
+        data.suggested_limit_cop > 0 ? "COP " + fmt.format(data.suggested_limit_cop) : "—";
+      document.getElementById("metaConf").textContent = data.confidence;
+      document.getElementById("metaLatency").textContent = data.latency_ms + " ms";
+      document.getElementById("metaCost").textContent = "$" + data.data_cost_usd.toFixed(2);
+
+      // Demo tag on section title
+      const featTitle = document.getElementById("featTitle");
+      featTitle.innerHTML = "Signal features"
+        + (data.demo ? '<span class="demo-tag">demo data</span>' : "");
+
+      // Feature table
+      const table = document.getElementById("featureTable");
+      table.innerHTML = "";
+      for (const [key, val] of Object.entries(data.features)) {
+        const label = FEATURE_LABELS[key] ?? key;
+        const tr = document.createElement("tr");
+
+        if (FLOAT_FEATURES.has(key)) {
+          const pct = Math.round(val * 100);
+          tr.innerHTML = `
+            <td>${label}</td>
+            <td class="bar-cell">
+              <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+            </td>
+            <td>${pct}%</td>`;
+        } else if (key === "repayment_proxy") {
+          tr.innerHTML = `<td>${label}</td><td></td><td>${val ? "✓ Yes" : "✗ No"}</td>`;
+        } else {
+          tr.innerHTML = `<td>${label}</td><td></td><td>${val}</td>`;
+        }
+        table.appendChild(tr);
+      }
+
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+</body>
+</html>

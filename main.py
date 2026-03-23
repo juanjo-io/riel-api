@@ -104,6 +104,11 @@ def connect():
     return FileResponse(os.path.join(BASE_DIR, "connect.html"))
 
 
+@app.get("/demo")
+def demo():
+    return FileResponse(os.path.join(BASE_DIR, "demo.html"))
+
+
 @app.get("/health")
 def health():
     return {"status": "healthy", "belvo_env": BELVO_ENV}
