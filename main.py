@@ -59,8 +59,12 @@ def belvo_token():
 def score(request: ScoreRequest):
     t_start = time.time()
 
-    with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
-        transactions = json.load(f)
+    if request.link_id == "demo":
+        with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
+            transactions = json.load(f)
+        demo = True
+    else:
+        raise HTTPException(status_code=501, detail="Live Belvo scoring not yet implemented. Use link_id='demo' to run the demo.")
 
     features = extract_features(transactions)
     result = calculate_riel_score(features)
@@ -76,6 +80,7 @@ def score(request: ScoreRequest):
         "features": features,
         "data_cost_usd": 0.08,
         "latency_ms": latency_ms,
+        "demo": demo,
     }
 
 
