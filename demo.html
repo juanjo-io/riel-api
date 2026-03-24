@@ -214,6 +214,17 @@
       display: none;
     }
 
+    .info-box {
+      background: #0c1828;
+      border: 1px solid #1a3a5c;
+      border-radius: 8px;
+      color: #7ab8e8;
+      font-size: 0.83rem;
+      line-height: 1.5;
+      padding: 12px 14px;
+      display: none;
+    }
+
     /* ─── x402 flow animation ────────────────────────────── */
     .flow {
       display: none;
@@ -441,6 +452,7 @@
       </div>
 
       <div class="err" id="s-err"></div>
+      <div class="info-box" id="s-info">🔗 Connect a real bank account via <a href="/connect" style="color:#7ab8e8;">connect</a> to enable live Belvo scoring.</div>
 
       <div class="result" id="s-result">
         <div class="score-row">
@@ -490,6 +502,7 @@
       </div>
 
       <div class="err" id="a-err"></div>
+      <div class="info-box" id="a-info">🔗 Live mode requires a valid Belvo link. Switch to Mock to demo the full agent pipeline.</div>
 
       <div class="result" id="a-result">
         <div class="score-row">
@@ -593,9 +606,11 @@
     // ── Standard score ───────────────────────────────────────
     async function runStandard() {
       const btn = document.getElementById("s-btn");
-      const errEl = document.getElementById("s-err");
+      const errEl  = document.getElementById("s-err");
+      const infoEl = document.getElementById("s-info");
       btn.disabled = true; btn.textContent = "Scoring…";
       errEl.style.display = "none";
+      infoEl.style.display = "none";
       document.getElementById("s-result").style.display = "none";
 
       let data;
@@ -608,7 +623,11 @@
         data = await r.json();
         if (!r.ok) throw new Error(data.detail ?? JSON.stringify(data));
       } catch(e) {
-        errEl.textContent = e.message; errEl.style.display = "block";
+        if (getProvider() === "belvo") {
+          infoEl.style.display = "block";
+        } else {
+          errEl.textContent = e.message; errEl.style.display = "block";
+        }
         btn.disabled = false; btn.textContent = "Get Score"; return;
       }
 
@@ -651,9 +670,11 @@
 
     async function runAgent() {
       const btn = document.getElementById("a-btn");
-      const errEl = document.getElementById("a-err");
+      const errEl  = document.getElementById("a-err");
+      const infoEl = document.getElementById("a-info");
       btn.disabled = true; btn.textContent = "Running…";
       errEl.style.display = "none";
+      infoEl.style.display = "none";
       document.getElementById("a-result").style.display = "none";
 
       resetFlow();
@@ -671,8 +692,12 @@
       data = d;
 
       if (!ok) {
-        errEl.textContent = data.detail ?? JSON.stringify(data);
-        errEl.style.display = "block";
+        if (getProvider() === "belvo") {
+          infoEl.style.display = "block";
+        } else {
+          errEl.textContent = data.detail ?? JSON.stringify(data);
+          errEl.style.display = "block";
+        }
         btn.disabled = false; btn.textContent = "Run Agent"; return;
       }
 
