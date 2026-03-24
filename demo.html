@@ -580,6 +580,8 @@
   <footer>Riél API · Sandbox · LATAM informal credit scoring</footer>
 
   <script>
+    const DEMO_API_KEY = "riel_sk_demo_28cf009ae77c8667587968f5";
+
     const FEATURE_LABELS = {
       payment_consistency:    "Payment consistency",
       counterparty_diversity: "Counterparty diversity",
@@ -686,7 +688,7 @@
       try {
         const r = await fetch(`/score?provider=${getProvider()}`, {
           method: "POST",
-          headers: {"Content-Type":"application/json"},
+          headers: {"Content-Type":"application/json", "X-API-Key": DEMO_API_KEY},
           body: JSON.stringify({link_id: getLinkId()}),
         });
         data = await r.json();
@@ -757,7 +759,7 @@
       let data;
       const fetchPromise = fetch(`/agent/procure?provider=${getProvider()}`, {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
+        headers: {"Content-Type":"application/json", "X-API-Key": DEMO_API_KEY},
         body: JSON.stringify({requested_amount_cop: parseFloat(document.getElementById("a-amount").value)}),
       }).then(r => r.json().then(d => ({ok: r.ok, data: d})));
 

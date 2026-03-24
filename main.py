@@ -10,7 +10,7 @@ from typing import Optional
 import stripe
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -30,6 +30,27 @@ BELVO_BASE_URL = "https://sandbox.belvo.com"
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 MPP_SECRET = os.getenv("STRIPE_MPP_SECRET", secrets.token_hex(32))
+
+# ── API key auth ──────────────────────────────────────────────────────────────
+# API_KEYS env var format: "key1:ClientName1,key2:ClientName2"
+def _load_api_keys() -> dict[str, dict]:
+    raw = os.getenv("API_KEYS", "")
+    keys: dict[str, dict] = {}
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if ":" not in entry:
+            continue
+        key, _, name = entry.partition(":")
+        keys[key.strip()] = {"client": name.strip(), "active": True, "created": "2026-03-24"}
+    return keys
+
+VALID_API_KEYS: dict[str, dict] = _load_api_keys()
+
+
+def verify_api_key(x_api_key: Optional[str] = Header(default=None)) -> dict:
+    if x_api_key and x_api_key in VALID_API_KEYS:
+        return VALID_API_KEYS[x_api_key]
+    raise HTTPException(status_code=401, detail={"error": "Invalid or missing API key"})
 
 COP_TO_USD = 4000  # 1 USD ≈ 4 000 COP (fixed rate for sandbox)
 
@@ -100,7 +121,8 @@ def belvo_token():
 
 
 @app.post("/score")
-def score(request: ScoreRequest, provider: Optional[str] = None):
+def score(request: ScoreRequest, provider: Optional[str] = None,
+          _key: dict = Depends(verify_api_key)):
     t_start = time.time()
 
     try:
@@ -232,7 +254,8 @@ def data_transactions(authorization: Optional[str] = Header(default=None)):
 # ── Autonomous Procurement Agent ─────────────────────────────────────────────
 
 @app.post("/agent/procure")
-def agent_procure(request: ProcureRequest, provider: Optional[str] = None):
+def agent_procure(request: ProcureRequest, provider: Optional[str] = None,
+                  _key: dict = Depends(verify_api_key)):
     """
     Autonomously procures transaction data via the x402 challenge/response
     protocol, scores it, and returns the credit decision.
@@ -294,6 +317,11 @@ def create_widget_session():
     if response.status_code not in (200, 201):
         raise HTTPException(status_code=response.status_code, detail=response.json())
     return response.json()
+
+
+@app.get("/me")
+def me(key_info: dict = Depends(verify_api_key)):
+    return {**key_info}
 
 
 @app.get("/merchants")
