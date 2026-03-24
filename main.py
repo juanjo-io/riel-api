@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from features import extract_features
 from scorer import calculate_riel_score
+from providers.registry import get_provider
 
 load_dotenv()
 
@@ -99,15 +100,18 @@ def belvo_token():
 
 
 @app.post("/score")
-def score(request: ScoreRequest):
+def score(request: ScoreRequest, provider: Optional[str] = None):
     t_start = time.time()
 
-    if request.link_id == "demo":
-        with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
-            transactions = json.load(f)
-        demo = True
-    else:
-        raise HTTPException(status_code=501, detail="Live Belvo scoring not yet implemented. Use link_id='demo' to run the demo.")
+    try:
+        dp = get_provider(provider)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        transactions = dp.get_transactions(request.link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
 
     features = extract_features(transactions)
     result = calculate_riel_score(features)
@@ -123,7 +127,7 @@ def score(request: ScoreRequest):
         "features": features,
         "data_cost_usd": 0.08,
         "latency_ms": latency_ms,
-        "demo": demo,
+        "provider": dp.provider_name(),
     }
 
 
@@ -228,7 +232,7 @@ def data_transactions(authorization: Optional[str] = Header(default=None)):
 # ── Autonomous Procurement Agent ─────────────────────────────────────────────
 
 @app.post("/agent/procure")
-def agent_procure(request: ProcureRequest):
+def agent_procure(request: ProcureRequest, provider: Optional[str] = None):
     """
     Autonomously procures transaction data via the x402 challenge/response
     protocol, scores it, and returns the credit decision.
@@ -237,7 +241,12 @@ def agent_procure(request: ProcureRequest):
     """
     t_start = time.time()
 
-    # Step 1 — attempt without credential (no token → always 402 in-process)
+    try:
+        dp = get_provider(provider)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # Step 1 — x402 challenge (in-process)
     challenge_id = _make_challenge_id()
     print(f"[procure] 402 received — paying for data... (challengeId: {challenge_id[:16]}…)")
 
@@ -245,9 +254,11 @@ def agent_procure(request: ProcureRequest):
     if not _verify_challenge_id(challenge_id):
         raise HTTPException(status_code=502, detail="x402 challenge verification failed.")
 
-    with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
-        transactions = json.load(f)
-    print(f"[procure] {len(transactions)} transactions acquired.")
+    try:
+        transactions = dp.get_transactions("procure")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+    print(f"[procure] {len(transactions)} transactions acquired via {dp.provider_name()}.")
 
     # Step 3 — score
     features = extract_features(transactions)
@@ -263,6 +274,7 @@ def agent_procure(request: ProcureRequest):
         "confidence": confidence,
         "features": features,
         "data_source": "x402_aggregator",
+        "provider": dp.provider_name(),
         "payment_usd": 0.08,
         "autonomous": True,
         "latency_ms": latency_ms,
