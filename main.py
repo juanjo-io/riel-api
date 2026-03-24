@@ -296,6 +296,13 @@ def create_widget_session():
     return response.json()
 
 
+@app.get("/merchants")
+def list_merchants():
+    """Returns the named mock merchant profiles available for demo scoring."""
+    from providers.mock_provider import MockProvider
+    return {"merchants": MockProvider().list_merchants()}
+
+
 @app.get("/connect")
 def connect():
     return FileResponse(os.path.join(BASE_DIR, "connect.html"))

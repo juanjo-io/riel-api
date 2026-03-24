@@ -399,6 +399,36 @@
       border-radius: 100px;
     }
 
+    /* ─── Merchant select ────────────────────────────────── */
+    select.merchant-select {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      padding: 10px 14px;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+    select.merchant-select:focus { border-color: var(--accent); }
+
+    /* ─── Merchant name above score ──────────────────────── */
+    .merchant-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+    }
+
     .divider {
       height: 1px;
       background: var(--border);
@@ -440,11 +470,24 @@
         </div>
       </div>
 
-      <div>
+      <!-- Mock mode: merchant dropdown -->
+      <div id="s-mock-input">
+        <label>Merchant</label>
+        <div class="input-row">
+          <select class="merchant-select" id="s-merchant" onchange="onMerchantChange()">
+            <option value="a1b2c3d4-0001-0001-0001-000000000001">Restaurante El Patio</option>
+            <option value="a1b2c3d4-0002-0002-0002-000000000002">Distribuidora Velásquez</option>
+            <option value="a1b2c3d4-0003-0003-0003-000000000003">Tienda Nueva</option>
+          </select>
+          <button class="btn btn-standard" id="s-btn" onclick="runStandard()">Get Score</button>
+        </div>
+      </div>
+      <!-- Belvo mode: text input -->
+      <div id="s-belvo-input" style="display:none">
         <label for="s-link">Link ID</label>
         <div class="input-row">
-          <input type="text" id="s-link" value="demo" />
-          <button class="btn btn-standard" id="s-btn" onclick="runStandard()">Get Score</button>
+          <input type="text" id="s-link" value="" placeholder="Enter Belvo link_id" />
+          <button class="btn btn-standard" id="s-btn-belvo" onclick="runStandard()">Get Score</button>
         </div>
       </div>
 
@@ -452,6 +495,7 @@
       <div class="info-box" id="s-info">🔗 Connect a real bank account via <a href="/connect" style="color:#7ab8e8;">connect</a> to enable live Belvo scoring.</div>
 
       <div class="result" id="s-result">
+        <div class="merchant-name" id="s-merchant-name" style="display:none"></div>
         <div class="score-row">
           <div>
             <div class="score-num" id="s-num">—</div>
@@ -552,6 +596,13 @@
       activeProvider = p;
       document.getElementById("toggle-mock").className  = "toggle-btn" + (p === "mock"  ? " active-mock"  : "");
       document.getElementById("toggle-belvo").className = "toggle-btn" + (p === "belvo" ? " active-belvo" : "");
+      const isMock = p === "mock";
+      document.getElementById("s-mock-input").style.display  = isMock  ? "" : "none";
+      document.getElementById("s-belvo-input").style.display = !isMock ? "" : "none";
+      // Reset results on provider switch
+      document.getElementById("s-result").style.display = "none";
+      document.getElementById("s-err").style.display    = "none";
+      document.getElementById("s-info").style.display   = "none";
       updateSubtitles();
     }
 
@@ -564,6 +615,25 @@
     }
 
     function getProvider() { return activeProvider; }
+
+    function getLinkId() {
+      if (activeProvider === "mock") {
+        return document.getElementById("s-merchant").value;
+      }
+      return document.getElementById("s-link").value.trim();
+    }
+
+    function getMerchantName() {
+      if (activeProvider !== "mock") return null;
+      const sel = document.getElementById("s-merchant");
+      return sel.options[sel.selectedIndex].text;
+    }
+
+    function onMerchantChange() {
+      document.getElementById("s-result").style.display = "none";
+      document.getElementById("s-err").style.display    = "none";
+      runStandard();
+    }
 
     function scoreColor(n) { return n > 65 ? "green" : n >= 40 ? "yellow" : "red"; }
 
@@ -602,7 +672,8 @@
 
     // ── Standard score ───────────────────────────────────────
     async function runStandard() {
-      const btn = document.getElementById("s-btn");
+      const btnId = activeProvider === "mock" ? "s-btn" : "s-btn-belvo";
+      const btn   = document.getElementById(btnId);
       const errEl  = document.getElementById("s-err");
       const infoEl = document.getElementById("s-info");
       btn.disabled = true; btn.textContent = "Scoring…";
@@ -615,7 +686,7 @@
         const r = await fetch(`/score?provider=${getProvider()}`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({link_id: document.getElementById("s-link").value.trim()}),
+          body: JSON.stringify({link_id: getLinkId()}),
         });
         data = await r.json();
         if (!r.ok) throw new Error(data.detail ?? JSON.stringify(data));
@@ -627,6 +698,11 @@
         }
         btn.disabled = false; btn.textContent = "Get Score"; return;
       }
+
+      const nameEl = document.getElementById("s-merchant-name");
+      const mName = getMerchantName();
+      if (mName) { nameEl.textContent = mName; nameEl.style.display = "block"; }
+      else        { nameEl.style.display = "none"; }
 
       document.getElementById("s-num").textContent = data.riel_score;
       document.getElementById("s-num").className = "score-num " + scoreColor(data.riel_score);
