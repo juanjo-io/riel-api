@@ -352,6 +352,13 @@
       <div class="logo-name">Riél</div>
     </div>
     <div class="header-sub">Autonomous Credit Intelligence for LatAm · Powered by x402</div>
+    <div style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;">
+      <label for="g-provider" style="font-size:0.72rem;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin:0;">Data provider</label>
+      <select id="g-provider" style="background:#111;border:1px solid #2a2a2a;border-radius:6px;color:#ccc;font-family:inherit;font-size:0.82rem;padding:5px 10px;outline:none;cursor:pointer;">
+        <option value="mock" selected>mock (demo)</option>
+        <option value="belvo">belvo (live)</option>
+      </select>
+    </div>
   </header>
 
   <div class="grid">
@@ -506,7 +513,8 @@
 
       let data;
       try {
-        const r = await fetch("/score", {
+        const prov = document.getElementById("g-provider").value;
+        const r = await fetch(`/score?provider=${prov}`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({link_id: document.getElementById("s-link").value.trim()}),
@@ -566,7 +574,8 @@
       document.getElementById("a-flow").classList.add("visible");
 
       let data;
-      const fetchPromise = fetch("/agent/procure", {
+      const prov = document.getElementById("g-provider").value;
+      const fetchPromise = fetch(`/agent/procure?provider=${prov}`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({requested_amount_cop: parseFloat(document.getElementById("a-amount").value)}),
