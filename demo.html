@@ -39,17 +39,22 @@
     }
 
     .logo {
+      display: inline-block;
       margin-bottom: 10px;
     }
 
     .logo-name {
       font-size: 2.5rem;
       font-weight: 800;
-      letter-spacing: 0.05em;
-      background: linear-gradient(to right, #60A5FA, #E2E8F0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+    }
+
+    .logo-line {
+      height: 2px;
+      background: linear-gradient(to right, #6366F1, #06B6D4, #6366F1);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+      border-radius: 2px;
     }
 
     .header-sub {
@@ -412,6 +417,7 @@
   <header>
     <div class="logo">
       <div class="logo-name">Riél</div>
+      <div class="logo-line"></div>
     </div>
     <div class="header-sub">Autonomous Credit Intelligence for LatAm · Powered by x402</div>
     <div>
