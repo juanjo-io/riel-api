@@ -35,7 +35,7 @@
     /* ─── Header ─────────────────────────────────────────── */
     header {
       text-align: center;
-      margin-bottom: 48px;
+      margin-bottom: 36px;
     }
 
     .logo {
@@ -65,6 +65,46 @@
       color: var(--muted);
       letter-spacing: 0.12em;
       text-transform: uppercase;
+    }
+
+    /* ─── Provider pill toggle ────────────────────────────── */
+    .provider-toggle {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 20px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 100px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .toggle-btn {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 100px;
+      cursor: pointer;
+      color: #555;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .toggle-btn.active-mock {
+      background: #2a2200;
+      color: var(--yellow);
+    }
+
+    .toggle-btn.active-belvo {
+      background: #0e2218;
+      color: var(--green);
+    }
+
+    .toggle-btn:not([class*="active"]):hover {
+      color: #888;
     }
 
     /* ─── Two-panel grid ─────────────────────────────────── */
@@ -319,6 +359,26 @@
     .agent-meta-row .key { color: #3a6a3a; }
     .agent-meta-row .val { color: var(--green); font-weight: 600; }
 
+    /* ─── data_source badges ─────────────────────────────── */
+    .source-mock  { color: var(--yellow); font-weight: 600; }
+    .source-belvo { color: var(--green);  font-weight: 600; }
+
+    .source-tag {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 100px;
+      margin-left: 6px;
+    }
+
+    .source-tag.demo {
+      background: #2a2200;
+      color: var(--yellow);
+      border: 1px solid #3a3200;
+    }
+
     .auto-badge {
       background: #0e2e0e;
       border: 1px solid #1e4e1e;
@@ -352,12 +412,11 @@
       <div class="logo-name">Riél</div>
     </div>
     <div class="header-sub">Autonomous Credit Intelligence for LatAm · Powered by x402</div>
-    <div style="margin-top:16px;display:inline-flex;align-items:center;gap:8px;">
-      <label for="g-provider" style="font-size:0.72rem;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin:0;">Data provider</label>
-      <select id="g-provider" style="background:#111;border:1px solid #2a2a2a;border-radius:6px;color:#ccc;font-family:inherit;font-size:0.82rem;padding:5px 10px;outline:none;cursor:pointer;">
-        <option value="mock" selected>mock (demo)</option>
-        <option value="belvo">belvo (live)</option>
-      </select>
+    <div>
+      <div class="provider-toggle">
+        <button class="toggle-btn active-mock" id="toggle-mock" onclick="setProvider('mock')">Mock (demo)</button>
+        <button class="toggle-btn" id="toggle-belvo" onclick="setProvider('belvo')">Belvo (live)</button>
+      </div>
     </div>
   </header>
 
@@ -369,7 +428,7 @@
         <div class="panel-icon icon-standard">◈</div>
         <div>
           <div class="panel-title">Standard Score</div>
-          <div class="panel-desc">POST /score · Belvo transaction data</div>
+          <div class="panel-desc" id="s-desc">POST /score · Mock transaction data · demo mode</div>
         </div>
       </div>
 
@@ -408,7 +467,7 @@
         <div class="panel-icon icon-agent">⚡</div>
         <div>
           <div class="panel-title">Autonomous Agent <span class="auto-badge">x402</span></div>
-          <div class="panel-desc">POST /agent/procure · self-paying data pipeline</div>
+          <div class="panel-desc" id="a-desc">POST /agent/procure · self-paying data pipeline</div>
         </div>
       </div>
 
@@ -476,7 +535,35 @@
     };
     const FLOAT_FEATURES = new Set(["payment_consistency","merchant_ratio","income_stability"]);
 
+    // ── Provider toggle ───────────────────────────────────────
+    let activeProvider = "mock";
+
+    function setProvider(p) {
+      activeProvider = p;
+      document.getElementById("toggle-mock").className  = "toggle-btn" + (p === "mock"  ? " active-mock"  : "");
+      document.getElementById("toggle-belvo").className = "toggle-btn" + (p === "belvo" ? " active-belvo" : "");
+      updateSubtitles();
+    }
+
+    function updateSubtitles() {
+      const isMock = activeProvider === "mock";
+      document.getElementById("s-desc").textContent =
+        isMock
+          ? "POST /score · Mock transaction data · demo mode"
+          : "POST /score · Belvo transaction data · live";
+    }
+
+    function getProvider() { return activeProvider; }
+
     function scoreColor(n) { return n > 65 ? "green" : n >= 40 ? "yellow" : "red"; }
+
+    function renderDataSource(el, source) {
+      if (source === "mock") {
+        el.innerHTML = `<span class="source-mock">mock</span><span class="source-tag demo">demo mode</span>`;
+      } else {
+        el.innerHTML = `<span class="source-belvo">${source}</span>`;
+      }
+    }
 
     function renderFeatureTable(tableEl, features) {
       tableEl.innerHTML = "";
@@ -513,8 +600,7 @@
 
       let data;
       try {
-        const prov = document.getElementById("g-provider").value;
-        const r = await fetch(`/score?provider=${prov}`, {
+        const r = await fetch(`/score?provider=${getProvider()}`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({link_id: document.getElementById("s-link").value.trim()}),
@@ -574,8 +660,7 @@
       document.getElementById("a-flow").classList.add("visible");
 
       let data;
-      const prov = document.getElementById("g-provider").value;
-      const fetchPromise = fetch(`/agent/procure?provider=${prov}`, {
+      const fetchPromise = fetch(`/agent/procure?provider=${getProvider()}`, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({requested_amount_cop: parseFloat(document.getElementById("a-amount").value)}),
@@ -596,7 +681,7 @@
       const b = document.getElementById("a-badge");
       b.textContent = data.recommendation.toUpperCase(); b.className = "badge " + data.recommendation;
 
-      document.getElementById("am-source").textContent  = data.data_source;
+      renderDataSource(document.getElementById("am-source"), data.data_source);
       document.getElementById("am-payment").textContent = "$" + data.payment_usd.toFixed(2) + " USD";
       document.getElementById("am-auto").textContent    = data.autonomous ? "✓ true" : "false";
       document.getElementById("am-latency").textContent = data.latency_ms + " ms";
