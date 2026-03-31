@@ -5,6 +5,7 @@ import json
 import secrets
 import time
 import os
+from datetime import date, timedelta
 from typing import Optional
 
 import stripe
@@ -98,6 +99,12 @@ class EvaluateRequest(BaseModel):
 
 class ProcureRequest(BaseModel):
     requested_amount_cop: float
+
+
+class ConnectRequest(BaseModel):
+    bank: str
+    username: str
+    password: str
 
 
 @app.get("/")
@@ -301,6 +308,69 @@ def agent_procure(request: ProcureRequest, provider: Optional[str] = None,
         "provider": dp.provider_name(),
         "payment_usd": 0.08,
         "autonomous": True,
+        "latency_ms": latency_ms,
+    }
+
+
+@app.post("/connect/score")
+def connect_score(request: ConnectRequest):
+    """
+    Bank-linking score endpoint for the /connect flow.
+    In mock mode: returns El Patio profile (score 77, approve) regardless of credentials.
+    In prometeo mode: logs in with the provided credentials and scores the first account.
+    """
+    t_start = time.time()
+    provider_key = os.getenv("DATA_PROVIDER", "prometeo").lower()
+
+    if provider_key == "mock":
+        from providers.mock_provider import MockProvider
+        dp = MockProvider()
+        transactions = dp.get_transactions("a1b2c3d4-0001-0001-0001-000000000001")
+        provider_used = "mock"
+    else:
+        try:
+            from prometeo import Client as PrometeoClient
+            client = PrometeoClient(os.getenv("PROMETEO_API_KEY"), environment="sandbox")
+            session = client.banking.login(
+                provider=request.bank,
+                username=request.username,
+                password=request.password,
+            )
+            accounts = session.get_accounts()
+            if not accounts:
+                raise HTTPException(status_code=422, detail="No accounts found for this user.")
+            account = accounts[0]
+            date_to = date.today()
+            date_from = date_to - timedelta(days=90)
+            movements = account.get_movements(date_from, date_to)
+            transactions = [
+                {
+                    "detail": m.detail,
+                    "debit": m.debit,
+                    "credit": m.credit,
+                    "date": str(m.date) if hasattr(m, "date") else None,
+                }
+                for m in movements
+            ]
+            provider_used = "prometeo"
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Bank connection error: {e}")
+
+    features = extract_features(transactions)
+    result = calculate_riel_score(features)
+    latency_ms = round((time.time() - t_start) * 1000, 2)
+    confidence = "high" if len(transactions) > 30 else "medium"
+
+    return {
+        "riel_score": result["riel_score"],
+        "recommendation": result["recommendation"],
+        "suggested_limit_cop": result["suggested_limit_cop"],
+        "confidence": confidence,
+        "features": features,
+        "provider": provider_used,
+        "bank": request.bank,
         "latency_ms": latency_ms,
     }
 
