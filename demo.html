@@ -96,7 +96,7 @@
       color: var(--yellow);
     }
 
-    .toggle-btn.active-belvo {
+    .toggle-btn.active-prometeo {
       background: #0e2218;
       color: var(--green);
     }
@@ -370,7 +370,7 @@
 
     /* ─── data_source badges ─────────────────────────────── */
     .source-mock  { color: var(--yellow); font-weight: 600; }
-    .source-belvo { color: var(--green);  font-weight: 600; }
+    .source-prometeo { color: var(--green);  font-weight: 600; }
 
     .source-tag {
       font-size: 0.62rem;
@@ -454,7 +454,7 @@
     <div>
       <div class="provider-toggle">
         <button class="toggle-btn active-mock" id="toggle-mock" onclick="setProvider('mock')">Mock (demo)</button>
-        <button class="toggle-btn" id="toggle-belvo" onclick="setProvider('belvo')">Belvo (live)</button>
+        <button class="toggle-btn" id="toggle-prometeo" onclick="setProvider('prometeo')">Prometeo (live)</button>
       </div>
     </div>
   </header>
@@ -483,17 +483,17 @@
           <button class="btn btn-standard" id="s-btn" onclick="runStandard()">Get Score</button>
         </div>
       </div>
-      <!-- Belvo mode: text input -->
-      <div id="s-belvo-input" style="display:none">
+      <!-- Prometeo mode: text input -->
+      <div id="s-prometeo-input" style="display:none">
         <label for="s-link">Link ID</label>
         <div class="input-row">
-          <input type="text" id="s-link" value="" placeholder="Enter Belvo link_id" />
-          <button class="btn btn-standard" id="s-btn-belvo" onclick="runStandard()">Get Score</button>
+          <input type="text" id="s-link" value="" placeholder="Enter Prometeo link_id" />
+          <button class="btn btn-standard" id="s-btn-prometeo" onclick="runStandard()">Get Score</button>
         </div>
       </div>
 
       <div class="err" id="s-err"></div>
-      <div class="info-box" id="s-info">🔗 Connect a real bank account via <a href="/connect" style="color:#7ab8e8;">connect</a> to enable live Belvo scoring.</div>
+      <div class="info-box" id="s-info">🔗 Connect a real bank account via <a href="/connect" style="color:#7ab8e8;">connect</a> to enable live Prometeo scoring.</div>
 
       <div class="result" id="s-result">
         <div class="merchant-name" id="s-merchant-name" style="display:none"></div>
@@ -544,7 +544,7 @@
       </div>
 
       <div class="err" id="a-err"></div>
-      <div class="info-box" id="a-info">🔗 Live mode requires a valid Belvo link. Switch to Mock to demo the full agent pipeline.</div>
+      <div class="info-box" id="a-info">🔗 Live mode requires a valid Prometeo link. Switch to Mock to demo the full agent pipeline.</div>
 
       <div class="result" id="a-result">
         <div class="score-row">
@@ -597,11 +597,11 @@
 
     function setProvider(p) {
       activeProvider = p;
-      document.getElementById("toggle-mock").className  = "toggle-btn" + (p === "mock"  ? " active-mock"  : "");
-      document.getElementById("toggle-belvo").className = "toggle-btn" + (p === "belvo" ? " active-belvo" : "");
+      document.getElementById("toggle-mock").className     = "toggle-btn" + (p === "mock"     ? " active-mock"     : "");
+      document.getElementById("toggle-prometeo").className = "toggle-btn" + (p === "prometeo" ? " active-prometeo" : "");
       const isMock = p === "mock";
-      document.getElementById("s-mock-input").style.display  = isMock  ? "" : "none";
-      document.getElementById("s-belvo-input").style.display = !isMock ? "" : "none";
+      document.getElementById("s-mock-input").style.display     = isMock  ? "" : "none";
+      document.getElementById("s-prometeo-input").style.display = !isMock ? "" : "none";
       // Reset results on provider switch
       document.getElementById("s-result").style.display = "none";
       document.getElementById("s-err").style.display    = "none";
@@ -614,7 +614,7 @@
       document.getElementById("s-desc").textContent =
         isMock
           ? "POST /score · Mock transaction data · demo mode"
-          : "POST /score · Belvo transaction data · live";
+          : "POST /score · Prometeo transaction data · live";
     }
 
     function getProvider() { return activeProvider; }
@@ -644,7 +644,7 @@
       if (source === "mock") {
         el.innerHTML = `<span class="source-mock">mock</span><span class="source-tag demo">demo mode</span>`;
       } else {
-        el.innerHTML = `<span class="source-belvo">${source}</span>`;
+        el.innerHTML = `<span class="source-prometeo">${source}</span>`;
       }
     }
 
@@ -675,7 +675,7 @@
 
     // ── Standard score ───────────────────────────────────────
     async function runStandard() {
-      const btnId = activeProvider === "mock" ? "s-btn" : "s-btn-belvo";
+      const btnId = activeProvider === "mock" ? "s-btn" : "s-btn-prometeo";
       const btn   = document.getElementById(btnId);
       const errEl  = document.getElementById("s-err");
       const infoEl = document.getElementById("s-info");
@@ -694,7 +694,7 @@
         data = await r.json();
         if (!r.ok) throw new Error(data.detail ?? JSON.stringify(data));
       } catch(e) {
-        if (getProvider() === "belvo") {
+        if (getProvider() === "prometeo") {
           infoEl.style.display = "block";
         } else {
           errEl.textContent = e.message; errEl.style.display = "block";
@@ -768,7 +768,7 @@
       data = d;
 
       if (!ok) {
-        if (getProvider() === "belvo") {
+        if (getProvider() === "prometeo") {
           infoEl.style.display = "block";
         } else {
           errEl.textContent = data.detail ?? JSON.stringify(data);

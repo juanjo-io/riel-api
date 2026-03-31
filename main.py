@@ -158,15 +158,16 @@ def agent_evaluate(request: EvaluateRequest):
     # 1. Score
     t_start = time.time()
 
-    if request.link_id == "demo":
-        with open(os.path.join(BASE_DIR, "sample_transactions.json")) as f:
-            transactions = json.load(f)
-        demo = True
-    else:
-        raise HTTPException(status_code=501, detail="Live Belvo scoring not yet implemented. Use link_id='demo'.")
+    dp = get_provider()
+    try:
+        transactions = dp.get_transactions(request.link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+    demo = False
 
     features = extract_features(transactions)
     score_result = calculate_riel_score(features)
+
     latency_ms = round((time.time() - t_start) * 1000, 2)
 
     recommendation = score_result["recommendation"]
@@ -343,4 +344,5 @@ def demo():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "belvo_env": BELVO_ENV}
+    return {"status": "healthy", "provider": os.getenv("DATA_PROVIDER", "prometeo")}
+
