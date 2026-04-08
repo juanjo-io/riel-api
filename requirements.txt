@@ -6,3 +6,4 @@ pandas
 python-dotenv
 httpx
 stripe
+prometeo
