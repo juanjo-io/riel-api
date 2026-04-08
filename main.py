@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import hmac
@@ -329,6 +330,10 @@ def connect_score(request: ConnectRequest):
         provider_used = "mock"
     else:
         try:
+            # AnyIO worker threads have no event loop; give this thread one
+            # so the Prometeo SDK's internal asyncio.get_event_loop() calls succeed.
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             from prometeo import Client as PrometeoClient
             client = PrometeoClient(os.getenv("PROMETEO_API_KEY"), environment="sandbox")
             session = client.banking.login(
