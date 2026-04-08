@@ -808,7 +808,7 @@
 
     // Mexico: real codes from Prometeo sandbox GET /provider/
     const BANKS_MX = [
-      { id: "bbva_mx",              name: "BBVA México",    initials: "BV", bg: "#004B9E", fg: "#fff"    },
+      { id: "bbva_corp_mx",         name: "BBVA México",    initials: "BV", bg: "#004B9E", fg: "#fff"    },
       { id: "santander_pers_mx",    name: "Santander",      initials: "SA", bg: "#E30000", fg: "#fff"    },
       { id: "citibanamex_pers_mx",  name: "Citibanamex",    initials: "CB", bg: "#003B99", fg: "#fff"    },
       { id: "banorte_pers_mx",      name: "Banorte",        initials: "BN", bg: "#00853E", fg: "#fff"    },
@@ -823,7 +823,7 @@
     [...BANKS_CO, ...BANKS_MX].forEach(b => { ALL_BANKS[b.id] = b; });
 
     // Banks that require a third auth field (OTP)
-    const BANKS_REQUIRE_OTP = new Set(["bbva_mx"]);
+    const BANKS_REQUIRE_OTP = new Set(["bbva_corp_mx"]);
 
     let selectedBank = null;
 
