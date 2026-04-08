@@ -106,6 +106,7 @@ class ConnectRequest(BaseModel):
     bank: str
     username: str
     password: str
+    otp: Optional[str] = None
 
 
 @app.get("/")
@@ -336,11 +337,14 @@ def connect_score(request: ConnectRequest):
             asyncio.set_event_loop(loop)
             from prometeo import Client as PrometeoClient
             client = PrometeoClient(os.getenv("PROMETEO_API_KEY"), environment="sandbox")
-            session = client.banking.login(
+            login_kwargs = dict(
                 provider=request.bank,
                 username=request.username,
                 password=request.password,
             )
+            if request.otp:
+                login_kwargs["otp"] = request.otp
+            session = client.banking.login(**login_kwargs)
             accounts = session.get_accounts()
             if not accounts:
                 raise HTTPException(status_code=422, detail="No accounts found for this user.")
