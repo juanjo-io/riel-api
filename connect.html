@@ -31,16 +31,12 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px 64px;
     }
 
-    /* ─── Header ─────────────────────────────────────────── */
+    /* ─── Shared header ───────────────────────────────────── */
     header {
       text-align: center;
-      margin-bottom: 28px;
+      padding: 40px 20px 0;
     }
 
     .logo-name {
@@ -65,7 +61,14 @@
       margin-top: 8px;
     }
 
-    /* ─── Card ───────────────────────────────────────────── */
+    /* ─── Narrow wrapper (landing, creds, loading, result) ── */
+    #narrow-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 64px;
+    }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -79,7 +82,7 @@
     .screen { display: none; }
     .screen.active { display: block; }
 
-    /* ─── Nav bar ────────────────────────────────────────── */
+    /* ─── Narrow-screen nav bar ──────────────────────────── */
     .nav {
       display: flex;
       align-items: center;
@@ -109,9 +112,7 @@
       letter-spacing: 0.1em;
     }
 
-    .nav-right {
-      margin-left: auto;
-    }
+    .nav-right { margin-left: auto; }
 
     /* ─── Landing screen ─────────────────────────────────── */
     .landing-icon {
@@ -218,95 +219,6 @@
       margin-top: 12px;
     }
     .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: #444; }
-
-    /* ─── Bank select screen ─────────────────────────────── */
-    .bank-screen-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 4px;
-    }
-
-    .bank-screen-sub {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 3px;
-      margin-bottom: 16px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--muted);
-      padding: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .tab-btn.active {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border2);
-    }
-
-    .bank-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .bank-card {
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 10px;
-      cursor: pointer;
-      text-align: center;
-      transition: border-color 0.15s, background 0.15s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .bank-card:hover {
-      border-color: var(--accent);
-      background: #131320;
-    }
-
-    .bank-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      flex-shrink: 0;
-    }
-
-    .bank-name {
-      font-size: 0.68rem;
-      font-weight: 500;
-      color: var(--muted);
-      line-height: 1.3;
-    }
 
     /* ─── Credentials screen ─────────────────────────────── */
     .selected-bank-row {
@@ -548,9 +460,176 @@
     .bar-bg { background: #1a1a1a; border-radius: 3px; height: 6px; overflow: hidden; }
     .bar-fill { background: var(--accent); height: 100%; border-radius: 3px; transition: width 0.5s ease; }
 
+    /* ─── Full-page bank selection screen ────────────────── */
+    #sc-banks {
+      width: 100%;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 36px 40px 80px;
+    }
+
+    .bank-page-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 52px;
+    }
+
+    .bank-page-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      color: var(--muted);
+      padding: 10px 20px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .bank-page-back:hover { color: var(--text); border-color: #555; }
+
+    .bank-step-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #333;
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .bank-page-heading {
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .bank-page-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      margin-bottom: 44px;
+      max-width: 540px;
+    }
+
+    /* Country tabs */
+    .bank-tabs {
+      display: inline-flex;
+      gap: 4px;
+      background: #0d0d0d;
+      border: 1px solid var(--border2);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 36px;
+    }
+
+    .bank-tab-btn {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 12px 32px;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .bank-tab-btn.active {
+      background: #1a1a1a;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    /* Big bank grid */
+    .big-bank-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 20px;
+    }
+
+    .big-bank-card {
+      background: #0d0d0d;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 16px 26px;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: border-color 0.15s, background 0.15s, transform 0.12s, box-shadow 0.15s;
+    }
+
+    .big-bank-card:hover {
+      border-color: var(--accent);
+      background: #111122;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .big-bank-card.selected {
+      border-color: var(--green);
+      background: #091409;
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 1px var(--green) inset, 0 8px 24px rgba(74,222,128,0.08);
+    }
+
+    .big-bank-logo {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
+
+    .big-bank-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width: 1060px) {
+      .big-bank-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    @media (max-width: 820px) {
+      #sc-banks { padding: 28px 24px 60px; }
+      .big-bank-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .bank-page-heading { font-size: 2rem; }
+      .bank-tab-btn { padding: 10px 22px; font-size: 0.9rem; }
+    }
+
+    @media (max-width: 540px) {
+      #sc-banks { padding: 20px 16px 48px; }
+      .big-bank-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .big-bank-card { padding: 24px 12px 20px; }
+      .big-bank-logo { width: 56px; height: 56px; border-radius: 14px; }
+      .bank-page-heading { font-size: 1.6rem; margin-bottom: 8px; }
+      .bank-page-nav { margin-bottom: 32px; }
+    }
+
     footer {
       text-align: center;
-      margin-top: 36px;
+      padding: 0 0 36px;
       font-size: 0.72rem;
       color: #252525;
     }
@@ -566,147 +645,154 @@
     <div class="header-sub">Bank Connection · Powered by Prometeo</div>
   </header>
 
-  <div class="card">
+  <!-- ── Narrow wrapper: landing / creds / loading / result ── -->
+  <div id="narrow-wrapper">
+    <div class="card">
 
-    <!-- ── Screen 1: Landing ─────────────────────────── -->
-    <div class="screen active" id="sc-landing">
-      <div class="landing-icon"><i data-lucide="building-2"></i></div>
-      <div class="screen-title">Connect your bank account</div>
-      <div class="screen-desc">
-        Riél needs 90 days of transaction history to generate your credit score.
-        Your data is processed securely and never shared with third parties.
+      <!-- Screen 1: Landing -->
+      <div class="screen active" id="sc-landing">
+        <div class="landing-icon"><i data-lucide="building-2"></i></div>
+        <div class="screen-title">Connect your bank account</div>
+        <div class="screen-desc">
+          Riél needs 90 days of transaction history to generate your credit score.
+          Your data is processed securely and never shared with third parties.
+        </div>
+
+        <ul class="permissions-list">
+          <li class="perm-item">
+            <div class="perm-icon"><i data-lucide="bar-chart-2"></i></div>
+            <div class="perm-text">
+              <strong>Transaction history</strong>
+              <span>Last 90 days of inflows and outflows</span>
+            </div>
+          </li>
+          <li class="perm-item">
+            <div class="perm-icon"><i data-lucide="landmark"></i></div>
+            <div class="perm-text">
+              <strong>Account balance</strong>
+              <span>Current and available balance</span>
+            </div>
+          </li>
+          <li class="perm-item">
+            <div class="perm-icon"><i data-lucide="shield-check"></i></div>
+            <div class="perm-text">
+              <strong>Read-only access</strong>
+              <span>Riél cannot initiate transactions or move money</span>
+            </div>
+          </li>
+        </ul>
+
+        <p class="security-note">🔐 256-bit encryption · Credentials go directly to your bank via Prometeo · Riél never stores them</p>
+        <button class="btn btn-primary" onclick="showScreen('sc-banks')">Connect my bank →</button>
       </div>
 
-      <ul class="permissions-list">
-        <li class="perm-item">
-          <div class="perm-icon"><i data-lucide="bar-chart-2"></i></div>
-          <div class="perm-text">
-            <strong>Transaction history</strong>
-            <span>Last 90 days of inflows and outflows</span>
+      <!-- Screen 3: Credentials -->
+      <div class="screen" id="sc-creds">
+        <div class="nav">
+          <button class="back-btn" onclick="showScreen('sc-banks')">← Back</button>
+          <span class="nav-title">Enter credentials</span>
+        </div>
+
+        <div class="selected-bank-row">
+          <div class="selected-bank-logo" id="creds-bank-logo"></div>
+          <div class="selected-bank-name" id="creds-bank-name"></div>
+        </div>
+
+        <div class="field">
+          <label for="inp-user">Username / Identification</label>
+          <input type="text" id="inp-user" placeholder="Online banking username" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="inp-pass">Password</label>
+          <input type="password" id="inp-pass" placeholder="Online banking password" autocomplete="current-password" />
+        </div>
+
+        <div class="creds-note">
+          <span class="creds-note-icon">🔒</span>
+          <span class="creds-note-text">
+            Your credentials are sent directly to your bank via Prometeo and are <strong>never stored by Riél</strong>.
+            This connection is read-only — Riél cannot move funds.
+          </span>
+        </div>
+
+        <div class="err" id="creds-err"></div>
+        <button class="btn btn-primary" id="creds-btn" onclick="submitConnect()">Connect &amp; Score →</button>
+      </div>
+
+      <!-- Screen 4: Loading -->
+      <div class="screen" id="sc-loading">
+        <div class="loading-center">
+          <div class="loading-spinner"></div>
+          <div class="loading-title">Connecting to your bank…</div>
+          <div class="loading-sub">Riél is fetching and scoring your transaction data.</div>
+          <div class="flow">
+            <div class="flow-step" id="cf-0"><div class="flow-dot"></div>Auth</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" id="cf-1"><div class="flow-dot"></div>x402</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" id="cf-2"><div class="flow-dot"></div>Fetched</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" id="cf-3"><div class="flow-dot"></div>Scored</div>
           </div>
-        </li>
-        <li class="perm-item">
-          <div class="perm-icon"><i data-lucide="landmark"></i></div>
-          <div class="perm-text">
-            <strong>Account balance</strong>
-            <span>Current and available balance</span>
-          </div>
-        </li>
-        <li class="perm-item">
-          <div class="perm-icon"><i data-lucide="shield-check"></i></div>
-          <div class="perm-text">
-            <strong>Read-only access</strong>
-            <span>Riél cannot initiate transactions or move money</span>
-          </div>
-        </li>
-      </ul>
-
-      <p class="security-note">🔐 256-bit encryption · Credentials go directly to your bank via Prometeo · Riél never stores them</p>
-      <button class="btn btn-primary" onclick="showScreen('sc-banks')">Connect my bank →</button>
-    </div>
-
-    <!-- ── Screen 2: Bank selection ──────────────── -->
-    <div class="screen" id="sc-banks">
-      <div class="nav">
-        <button class="back-btn" onclick="showScreen('sc-landing')">← Back</button>
-        <span class="nav-title">Select bank</span>
-      </div>
-      <div class="bank-screen-title">Which bank do you use?</div>
-      <div class="bank-screen-sub">Select your bank to continue.</div>
-
-      <div class="tabs">
-        <button class="tab-btn active" id="tab-co" onclick="showCountry('co')">🇨🇴 Colombia</button>
-        <button class="tab-btn"        id="tab-mx" onclick="showCountry('mx')">🇲🇽 México</button>
-      </div>
-
-      <div class="bank-grid" id="bank-grid-co"></div>
-      <div class="bank-grid" id="bank-grid-mx" style="display:none;"></div>
-    </div>
-
-    <!-- ── Screen 3: Credentials ─────────────────── -->
-    <div class="screen" id="sc-creds">
-      <div class="nav">
-        <button class="back-btn" onclick="showScreen('sc-banks')">← Back</button>
-        <span class="nav-title">Enter credentials</span>
-      </div>
-
-      <div class="selected-bank-row">
-        <div class="selected-bank-logo" id="creds-bank-logo"></div>
-        <div class="selected-bank-name" id="creds-bank-name"></div>
-      </div>
-
-      <div class="field">
-        <label for="inp-user">Username / Identification</label>
-        <input type="text" id="inp-user" placeholder="Online banking username" autocomplete="username" />
-      </div>
-      <div class="field">
-        <label for="inp-pass">Password</label>
-        <input type="password" id="inp-pass" placeholder="Online banking password" autocomplete="current-password" />
-      </div>
-
-      <div class="creds-note">
-        <span class="creds-note-icon">🔒</span>
-        <span class="creds-note-text">
-          Your credentials are sent directly to your bank via Prometeo and are <strong>never stored by Riél</strong>.
-          This connection is read-only — Riél cannot move funds.
-        </span>
-      </div>
-
-      <div class="err" id="creds-err"></div>
-      <button class="btn btn-primary" id="creds-btn" onclick="submitConnect()">Connect &amp; Score →</button>
-    </div>
-
-    <!-- ── Screen 4: Loading ──────────────────────── -->
-    <div class="screen" id="sc-loading">
-      <div class="loading-center">
-        <div class="loading-spinner"></div>
-        <div class="loading-title">Connecting to your bank…</div>
-        <div class="loading-sub">Riél is fetching and scoring your transaction data.</div>
-        <div class="flow">
-          <div class="flow-step" id="cf-0"><div class="flow-dot"></div>Auth</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step" id="cf-1"><div class="flow-dot"></div>x402</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step" id="cf-2"><div class="flow-dot"></div>Fetched</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step" id="cf-3"><div class="flow-dot"></div>Scored</div>
         </div>
       </div>
-    </div>
 
-    <!-- ── Screen 5: Result ───────────────────────── -->
-    <div class="screen" id="sc-result">
-      <div class="nav">
-        <span class="nav-title">Credit Score</span>
-        <span class="nav-right result-bank-badge" id="result-bank-label"></span>
-      </div>
-
-      <div class="score-row">
-        <div>
-          <div class="score-num" id="r-score">—</div>
-          <div class="score-of">Riél Score / 100</div>
+      <!-- Screen 5: Result -->
+      <div class="screen" id="sc-result">
+        <div class="nav">
+          <span class="nav-title">Credit Score</span>
+          <span class="nav-right result-bank-badge" id="result-bank-label"></span>
         </div>
-        <span class="badge" id="r-badge">—</span>
+
+        <div class="score-row">
+          <div>
+            <div class="score-num" id="r-score">—</div>
+            <div class="score-of">Riél Score / 100</div>
+          </div>
+          <span class="badge" id="r-badge">—</span>
+        </div>
+
+        <div class="divider"></div>
+        <div class="pills" id="r-pills"></div>
+
+        <div class="section-label">Signal Features</div>
+        <table id="r-table"></table>
+
+        <button class="btn btn-ghost" onclick="showScreen('sc-landing')">Connect another bank</button>
       </div>
 
-      <div class="divider"></div>
-      <div class="pills" id="r-pills"></div>
+    </div><!-- /card -->
+  </div><!-- /narrow-wrapper -->
 
-      <div class="section-label">Signal Features</div>
-      <table id="r-table"></table>
-
-      <button class="btn btn-ghost" onclick="showScreen('sc-landing')">Connect another bank</button>
+  <!-- ── Full-page bank selection (outside the card) ──────── -->
+  <div class="screen" id="sc-banks">
+    <div class="bank-page-nav">
+      <button class="bank-page-back" onclick="showScreen('sc-landing')">← Back</button>
+      <span class="bank-step-pill">Step 1 of 2</span>
     </div>
 
-  </div><!-- /card -->
+    <div class="bank-page-heading">Which bank do you use?</div>
+    <div class="bank-page-sub">Select your bank to continue. Riél supports all major Colombian and Mexican banks via Prometeo.</div>
+
+    <div class="bank-tabs">
+      <button class="bank-tab-btn active" id="tab-co" onclick="showCountry('co')">🇨🇴 Colombia</button>
+      <button class="bank-tab-btn"        id="tab-mx" onclick="showCountry('mx')">🇲🇽 México</button>
+    </div>
+
+    <div class="big-bank-grid" id="bank-grid-co"></div>
+    <div class="big-bank-grid" id="bank-grid-mx" style="display:none;"></div>
+  </div>
 
   <footer>Riél API · Sandbox · LATAM informal credit scoring</footer>
 
   <script>
     // ── Bank catalogue ────────────────────────────────────────
+    // Provider IDs sourced from Prometeo sandbox GET /provider/.
+    // Colombia: only davivienda_pers_co is live in this sandbox account;
+    //           remaining CO banks show in UI but only work in mock mode.
     const BANKS_CO = [
+      { id: "davivienda_pers_co",    name: "Davivienda",    initials: "DV", bg: "#CC0000", fg: "#fff"    },
       { id: "bancolombia_co_retail", name: "Bancolombia",   initials: "BC", bg: "#FFD700", fg: "#1a1400" },
-      { id: "davivienda_co_retail",  name: "Davivienda",    initials: "DV", bg: "#CC0000", fg: "#fff"    },
       { id: "bogota_co_retail",      name: "Bco. Bogotá",   initials: "BB", bg: "#003F8A", fg: "#fff"    },
       { id: "occidente_co_retail",   name: "Occidente",     initials: "BO", bg: "#006633", fg: "#fff"    },
       { id: "bbva_co_retail",        name: "BBVA",          initials: "BV", bg: "#004B9E", fg: "#fff"    },
@@ -716,19 +802,19 @@
       { id: "av_villas_co_retail",   name: "AV Villas",     initials: "AV", bg: "#1E5FAD", fg: "#fff"    },
     ];
 
+    // Mexico: real codes from Prometeo sandbox GET /provider/
     const BANKS_MX = [
-      { id: "bbva_mx_retail",       name: "BBVA México",    initials: "BV", bg: "#004B9E", fg: "#fff"    },
-      { id: "santander_mx_retail",  name: "Santander",      initials: "SA", bg: "#E30000", fg: "#fff"    },
-      { id: "banamex_mx_retail",    name: "Citibanamex",    initials: "CB", bg: "#003B99", fg: "#fff"    },
-      { id: "banorte_mx_retail",    name: "Banorte",        initials: "BN", bg: "#00853E", fg: "#fff"    },
+      { id: "bbva_corp_mx",         name: "BBVA México",    initials: "BV", bg: "#004B9E", fg: "#fff"    },
+      { id: "santander_pers_mx",    name: "Santander",      initials: "SA", bg: "#E30000", fg: "#fff"    },
+      { id: "citibanamex_pers_mx",  name: "Citibanamex",    initials: "CB", bg: "#003B99", fg: "#fff"    },
+      { id: "banorte_pers_mx",      name: "Banorte",        initials: "BN", bg: "#00853E", fg: "#fff"    },
+      { id: "banorte_corp_mx",      name: "Banorte Emp.",   initials: "BE", bg: "#005C2B", fg: "#fff"    },
+      { id: "scotia_corp_mx",       name: "Scotiabank",     initials: "SC", bg: "#C8001A", fg: "#fff"    },
+      { id: "bitso_mx",             name: "Bitso",          initials: "BS", bg: "#1A1A2E", fg: "#7c6aff" },
       { id: "hsbc_mx_retail",       name: "HSBC",           initials: "HS", bg: "#DB0011", fg: "#fff"    },
-      { id: "scotiabank_mx_retail", name: "Scotiabank",     initials: "SC", bg: "#C8001A", fg: "#fff"    },
-      { id: "azteca_mx_retail",     name: "Bco. Azteca",    initials: "BA", bg: "#FFD200", fg: "#1a1200" },
       { id: "inbursa_mx_retail",    name: "Inbursa",        initials: "IN", bg: "#0055A5", fg: "#fff"    },
-      { id: "bajio_mx_retail",      name: "Bco. del Bajío", initials: "BJ", bg: "#004B2D", fg: "#fff"    },
     ];
 
-    // Flat lookup by id
     const ALL_BANKS = {};
     [...BANKS_CO, ...BANKS_MX].forEach(b => { ALL_BANKS[b.id] = b; });
 
@@ -736,14 +822,21 @@
 
     // ── Screen transitions ────────────────────────────────────
     function showScreen(id) {
+      const isBankPage = id === "sc-banks";
+
+      // Toggle narrow wrapper vs full-page bank screen
+      document.getElementById("narrow-wrapper").style.display = isBankPage ? "none" : "";
+
+      // Manage .screen active state — narrow screens are inside the card,
+      // sc-banks is a sibling outside it; both use .screen class
       document.querySelectorAll(".screen").forEach(el => el.classList.remove("active"));
       document.getElementById(id).classList.add("active");
     }
 
     // ── Country tabs ──────────────────────────────────────────
     function showCountry(c) {
-      document.getElementById("tab-co").className = "tab-btn" + (c === "co" ? " active" : "");
-      document.getElementById("tab-mx").className = "tab-btn" + (c === "mx" ? " active" : "");
+      document.getElementById("tab-co").className = "bank-tab-btn" + (c === "co" ? " active" : "");
+      document.getElementById("tab-mx").className = "bank-tab-btn" + (c === "mx" ? " active" : "");
       document.getElementById("bank-grid-co").style.display = c === "co" ? "" : "none";
       document.getElementById("bank-grid-mx").style.display = c === "mx" ? "" : "none";
     }
@@ -751,15 +844,18 @@
     // ── Render bank grids ─────────────────────────────────────
     function renderBankGrid(banks, containerId) {
       document.getElementById(containerId).innerHTML = banks.map(b => `
-        <div class="bank-card" onclick="selectBank('${b.id}')">
-          <div class="bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
-          <div class="bank-name">${b.name}</div>
+        <div class="big-bank-card" id="bcard-${b.id}" onclick="selectBank('${b.id}', this)">
+          <div class="big-bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
+          <div class="big-bank-name">${b.name}</div>
         </div>
       `).join("");
     }
 
-    // ── Select bank → credentials screen ─────────────────────
-    function selectBank(bankId) {
+    // ── Select bank → brief highlight → credentials screen ───
+    function selectBank(bankId, el) {
+      document.querySelectorAll(".big-bank-card").forEach(c => c.classList.remove("selected"));
+      el.classList.add("selected");
+
       selectedBank = ALL_BANKS[bankId];
 
       const logo = document.getElementById("creds-bank-logo");
@@ -775,7 +871,7 @@
       document.getElementById("creds-btn").disabled      = false;
       document.getElementById("creds-btn").textContent   = "Connect & Score →";
 
-      showScreen("sc-creds");
+      setTimeout(() => showScreen("sc-creds"), 130);
     }
 
     // ── Flow animation ────────────────────────────────────────
@@ -803,14 +899,14 @@
       const btn      = document.getElementById("creds-btn");
 
       if (!username || !password) {
-        errEl.textContent      = "Please enter your username and password.";
-        errEl.style.display    = "block";
+        errEl.textContent   = "Please enter your username and password.";
+        errEl.style.display = "block";
         return;
       }
 
-      errEl.style.display  = "none";
-      btn.disabled         = true;
-      btn.textContent      = "Connecting…";
+      errEl.style.display = "none";
+      btn.disabled        = true;
+      btn.textContent     = "Connecting…";
 
       showScreen("sc-loading");
       resetFlow();
@@ -861,8 +957,8 @@
       document.getElementById("r-pills").innerHTML = [
         ["Confidence", data.confidence],
         ["Limit", data.suggested_limit_cop > 0 ? "COP " + fmt.format(data.suggested_limit_cop) : "—"],
-        ["Latency",   data.latency_ms + " ms"],
-        ["Provider",  data.provider],
+        ["Latency",  data.latency_ms + " ms"],
+        ["Provider", data.provider],
       ].map(([k, v]) => `<div class="pill">${k}: <strong>${v}</strong></div>`).join("");
 
       const tableEl = document.getElementById("r-table");
