@@ -4,15 +4,18 @@ import hashlib
 import hmac
 import json
 import secrets
+import threading
 import time
 import os
-from datetime import date, timedelta
+import uuid
+from datetime import date, datetime as dt, timedelta
 from typing import Optional
 
+import httpx
 import stripe
 import requests
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -79,6 +82,130 @@ def _verify_challenge_id(token: str, max_age: int = 300) -> bool:
     except Exception:
         return False
 
+# ── Score history & webhook storage ──────────────────────────────────────────
+# TODO: replace these in-memory dicts with Supabase tables when credentials
+# are available (SUPABASE_URL + SUPABASE_KEY env vars).
+
+_history_lock = threading.Lock()
+# link_id → {score, recommendation, timestamp, bank}
+_score_history: dict[str, dict] = {}
+
+_webhook_lock = threading.Lock()
+# list of {id, client, callback_url, created}
+_webhooks: list[dict] = []
+
+
+def _generate_explanation(features: dict, result: dict) -> str:
+    """Rule-based plain-language explanation of a Riél score."""
+    score = result["riel_score"]
+    rec   = result["recommendation"]
+    limit = result["suggested_limit_cop"]
+    pc    = features["payment_consistency"]
+    cd    = features["counterparty_diversity"]
+    is_   = features["income_stability"]
+    rp    = features["repayment_proxy"]
+    td    = features["tenure_days"]
+
+    sentences = []
+
+    limit_str = f"COP {int(limit):,}" if limit > 0 else "no credit line"
+    sentences.append(
+        f"This merchant scores {score}/100, resulting in a {rec} decision "
+        f"with a recommended credit limit of {limit_str}."
+    )
+
+    pc_pct = round(pc * 100)
+    if pc >= 0.85:
+        sentences.append(
+            f"Payment consistency is strong at {pc_pct}%, indicating reliable "
+            f"and regular transaction activity across {td} days of banking history."
+        )
+    elif pc >= 0.65:
+        sentences.append(
+            f"Payment consistency is moderate at {pc_pct}% over {td} days, "
+            f"suggesting some irregularity that a lender should investigate."
+        )
+    else:
+        sentences.append(
+            f"Payment consistency is low at {pc_pct}% over {td} days, "
+            f"reflecting irregular activity that materially increases credit risk."
+        )
+
+    if cd >= 15:
+        sentences.append(
+            f"High counterparty diversity ({cd} unique parties) reduces "
+            f"concentration risk and indicates a broad, healthy revenue base."
+        )
+    elif cd >= 8:
+        sentences.append(
+            f"Moderate counterparty diversity ({cd} unique parties) shows a "
+            f"developing customer base with some concentration risk."
+        )
+    else:
+        sentences.append(
+            f"Low counterparty diversity ({cd} unique parties) signals high "
+            f"concentration risk — revenue depends on very few sources."
+        )
+
+    is_pct = round(is_ * 100)
+    if is_ >= 0.75 and rp:
+        sentences.append(
+            f"Income stability of {is_pct}% combined with positive repayment "
+            f"signals supports predictable repayment capacity."
+        )
+    elif is_ >= 0.75:
+        sentences.append(
+            f"Income stability is {is_pct}%, supporting predictable cash flow; "
+            f"no prior repayment-like behavior was detected in the transaction history."
+        )
+    else:
+        sentences.append(
+            f"Income volatility (stability: {is_pct}%) may limit reliable "
+            f"repayment — lenders should verify seasonal factors before extending credit."
+        )
+
+    return " ".join(sentences)
+
+
+def _fire_webhooks(link_id: str, prev: dict, new_score: int, new_rec: str) -> None:
+    """POST score-change event to every registered webhook URL."""
+    payload = {
+        "event": "score_change",
+        "merchant_id": link_id,
+        "old_score": prev["score"],
+        "new_score": new_score,
+        "old_recommendation": prev["recommendation"],
+        "new_recommendation": new_rec,
+        "timestamp": dt.utcnow().isoformat() + "Z",
+    }
+    with _webhook_lock:
+        hooks = list(_webhooks)
+    for hook in hooks:
+        try:
+            httpx.post(hook["callback_url"], json=payload, timeout=5.0)
+            print(f"[webhook] delivered to {hook['callback_url']}")
+        except Exception as e:
+            print(f"[webhook] failed → {hook['callback_url']}: {e}")
+
+
+def _record_score(link_id: str, score: int, rec: str, bank: str,
+                  background_tasks: BackgroundTasks) -> None:
+    """Store score in history; schedule webhook delivery if thresholds crossed."""
+    with _history_lock:
+        prev = _score_history.get(link_id)
+        _score_history[link_id] = {
+            "score": score,
+            "recommendation": rec,
+            "bank": bank,
+            "timestamp": dt.utcnow().isoformat() + "Z",
+        }
+    if prev:
+        delta = abs(score - prev["score"])
+        bucket_changed = prev["recommendation"] != rec
+        if delta >= 15 or bucket_changed:
+            background_tasks.add_task(_fire_webhooks, link_id, prev, score, rec)
+
+
 app = FastAPI(title="Riél API", version="0.1.0")
 
 app.add_middleware(
@@ -87,6 +214,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _seed_score_history() -> None:
+    """Pre-populate score history with mock profiles so the dashboard has data."""
+    from providers.mock_provider import MockProvider
+    dp = MockProvider()
+    merchants = dp.list_merchants()
+    banks = ["Davivienda", "BBVA México", "Banorte"]
+    for i, m in enumerate(merchants):
+        txns = dp.get_transactions(m["link_id"])
+        feats = extract_features(txns)
+        res = calculate_riel_score(feats)
+        # Backdate timestamps so weekly chart shows spread
+        ts = (dt.utcnow() - timedelta(days=i * 8)).isoformat() + "Z"
+        with _history_lock:
+            _score_history[m["link_id"]] = {
+                "score": res["riel_score"],
+                "recommendation": res["recommendation"],
+                "bank": banks[i],
+                "timestamp": ts,
+            }
+
+
+class WebhookRequest(BaseModel):
+    callback_url: str
 
 
 class ScoreRequest(BaseModel):
@@ -130,8 +283,8 @@ def belvo_token():
 
 
 @app.post("/score")
-def score(request: ScoreRequest, provider: Optional[str] = None,
-          _key: dict = Depends(verify_api_key)):
+def score(request: ScoreRequest, background_tasks: BackgroundTasks,
+          provider: Optional[str] = None, _key: dict = Depends(verify_api_key)):
     t_start = time.time()
 
     try:
@@ -149,6 +302,9 @@ def score(request: ScoreRequest, provider: Optional[str] = None,
 
     latency_ms = round((time.time() - t_start) * 1000, 2)
     confidence = "high" if len(transactions) > 30 else "medium"
+
+    _record_score(request.link_id, result["riel_score"],
+                  result["recommendation"], dp.provider_name(), background_tasks)
 
     return {
         "riel_score": result["riel_score"],
@@ -424,4 +580,146 @@ def demo():
 @app.get("/health")
 def health():
     return {"status": "healthy", "provider": os.getenv("DATA_PROVIDER", "prometeo")}
+
+
+# ── Score Explainability ───────────────────────────────────────────────────────
+
+@app.get("/score/{link_id}/explain")
+def score_explain(link_id: str, provider: Optional[str] = None,
+                  _key: dict = Depends(verify_api_key)):
+    """
+    Returns a plain-language explanation of why a merchant received their score.
+    Re-runs the scoring pipeline; no caching.
+    """
+    try:
+        dp = get_provider(provider)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        transactions = dp.get_transactions(link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+
+    features = extract_features(transactions)
+    result = calculate_riel_score(features)
+    explanation = _generate_explanation(features, result)
+
+    return {
+        "link_id": link_id,
+        "riel_score": result["riel_score"],
+        "recommendation": result["recommendation"],
+        "suggested_limit_cop": result["suggested_limit_cop"],
+        "explanation": explanation,
+        "features": features,
+        "provider": dp.provider_name(),
+    }
+
+
+# ── Webhooks ───────────────────────────────────────────────────────────────────
+
+@app.post("/webhooks", status_code=201)
+def register_webhook(request: WebhookRequest,
+                     key_info: dict = Depends(verify_api_key)):
+    """Register a callback URL to receive score-change events."""
+    hook = {
+        "id": str(uuid.uuid4()),
+        "client": key_info["client"],
+        "callback_url": request.callback_url,
+        "created": dt.utcnow().isoformat() + "Z",
+    }
+    with _webhook_lock:
+        _webhooks.append(hook)
+    return hook
+
+
+@app.get("/webhooks")
+def list_webhooks(key_info: dict = Depends(verify_api_key)):
+    """List webhooks registered by the calling API key's client."""
+    with _webhook_lock:
+        hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
+    return {"webhooks": hooks, "count": len(hooks)}
+
+
+@app.delete("/webhooks/{webhook_id}", status_code=204)
+def delete_webhook(webhook_id: str, key_info: dict = Depends(verify_api_key)):
+    """Delete a webhook registration."""
+    with _webhook_lock:
+        before = len(_webhooks)
+        _webhooks[:] = [
+            h for h in _webhooks
+            if not (h["id"] == webhook_id and h["client"] == key_info["client"])
+        ]
+        removed = before - len(_webhooks)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Webhook not found.")
+
+
+# ── Lender Dashboard ──────────────────────────────────────────────────────────
+
+@app.get("/dashboard")
+def dashboard():
+    return FileResponse(os.path.join(BASE_DIR, "dashboard.html"))
+
+
+@app.get("/dashboard/stats")
+def dashboard_stats(_key: dict = Depends(verify_api_key)):
+    """
+    Returns aggregated stats for the lender dashboard charts.
+    Derived from in-memory score history (seeded with mock profiles on startup).
+    TODO: replace with Supabase query once SUPABASE_URL + SUPABASE_KEY are set.
+    """
+    with _history_lock:
+        history = list(_score_history.values())
+
+    # 1 — Score distribution
+    buckets = {"0-20": 0, "21-40": 0, "41-60": 0, "61-80": 0, "81-100": 0}
+    for entry in history:
+        s = entry["score"]
+        if s <= 20:    buckets["0-20"] += 1
+        elif s <= 40:  buckets["21-40"] += 1
+        elif s <= 60:  buckets["41-60"] += 1
+        elif s <= 80:  buckets["61-80"] += 1
+        else:          buckets["81-100"] += 1
+
+    # 2 — Approval rate over last 8 weeks (synthetic for demo;
+    #     in production: GROUP BY week from Supabase scores table)
+    today = date.today()
+    weekly_labels, weekly_rates = [], []
+    # Seed deterministic synthetic rates from history
+    approval_counts = [entry["recommendation"] == "approve" for entry in history]
+    base_rate = round((sum(approval_counts) / len(approval_counts) * 100) if history else 60, 1)
+    for w in range(7, -1, -1):
+        week_start = today - timedelta(weeks=w)
+        weekly_labels.append(week_start.strftime("%b %d"))
+        # Vary ±8 pts around base to simulate weekly movement
+        variance = ((w * 3) % 17) - 8
+        weekly_rates.append(min(100, max(0, round(base_rate + variance, 1))))
+
+    # 3 — Average credit limit by bank (from score history)
+    bank_totals: dict[str, list] = {}
+    for entry in history:
+        bank = entry.get("bank", "Unknown")
+        limit = 300000 if entry["recommendation"] == "approve" else (
+            150000 if entry["recommendation"] == "review" else 0
+        )
+        bank_totals.setdefault(bank, []).append(limit)
+    avg_by_bank = {
+        bank: round(sum(limits) / len(limits))
+        for bank, limits in bank_totals.items()
+    }
+
+    return {
+        "score_distribution": buckets,
+        "approval_rate_weekly": {
+            "labels": weekly_labels,
+            "data": weekly_rates,
+        },
+        "avg_limit_by_bank": avg_by_bank,
+        "total_merchants_scored": len(history),
+        "overall_approval_rate": round(
+            sum(1 for e in history if e["recommendation"] == "approve") / len(history) * 100
+            if history else 0, 1
+        ),
+    }
 
