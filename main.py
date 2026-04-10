@@ -322,7 +322,7 @@ def connect_score(request: ConnectRequest):
     In prometeo mode: logs in with the provided credentials and scores the first account.
     """
     t_start = time.time()
-    provider_key = os.getenv("DATA_PROVIDER", "mock").lower()
+    provider_key = "mock"  # hardcoded until Prometeo production access is enabled
 
     if provider_key == "mock":
         from providers.mock_provider import MockProvider
