@@ -289,8 +289,9 @@ def score(request: ScoreRequest, background_tasks: BackgroundTasks,
 
     try:
         dp = get_provider(provider)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (ValueError, Exception) as e:
+        raise HTTPException(status_code=400 if isinstance(e, ValueError) else 502,
+                            detail=str(e))
 
     try:
         transactions = dp.get_transactions(request.link_id)
@@ -432,8 +433,9 @@ def agent_procure(request: ProcureRequest, provider: Optional[str] = None,
 
     try:
         dp = get_provider(provider)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (ValueError, Exception) as e:
+        raise HTTPException(status_code=400 if isinstance(e, ValueError) else 502,
+                            detail=str(e))
 
     # Step 1 — x402 challenge (in-process)
     challenge_id = _make_challenge_id()
@@ -593,8 +595,9 @@ def score_explain(link_id: str, provider: Optional[str] = None,
     """
     try:
         dp = get_provider(provider)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except (ValueError, Exception) as e:
+        raise HTTPException(status_code=400 if isinstance(e, ValueError) else 502,
+                            detail=str(e))
 
     try:
         transactions = dp.get_transactions(link_id)
@@ -639,6 +642,33 @@ def list_webhooks(key_info: dict = Depends(verify_api_key)):
     with _webhook_lock:
         hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
     return {"webhooks": hooks, "count": len(hooks)}
+
+
+@app.post("/webhooks/test")
+def test_webhook_delivery(key_info: dict = Depends(verify_api_key)):
+    """
+    Immediately fires a test payload to every webhook registered by this client.
+    Use this to verify your callback_url is reachable without waiting for a score change.
+    """
+    payload = {
+        "event": "test",
+        "message": "Test webhook delivery from Riél API.",
+        "timestamp": dt.utcnow().isoformat() + "Z",
+    }
+    with _webhook_lock:
+        hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
+
+    results = []
+    for hook in hooks:
+        try:
+            r = httpx.post(hook["callback_url"], json=payload, timeout=5.0)
+            results.append({"id": hook["id"], "url": hook["callback_url"],
+                            "status": r.status_code, "ok": True})
+        except Exception as e:
+            results.append({"id": hook["id"], "url": hook["callback_url"],
+                            "error": str(e), "ok": False})
+
+    return {"fired": len(results), "results": results}
 
 
 @app.delete("/webhooks/{webhook_id}", status_code=204)
