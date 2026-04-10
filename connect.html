@@ -586,6 +586,17 @@
       box-shadow: 0 0 0 1px var(--green) inset, 0 8px 24px rgba(74,222,128,0.08);
     }
 
+    .big-bank-card.coming-soon {
+      opacity: 0.38;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .big-bank-card.dev-provider {
+      border-style: dashed;
+      border-color: #2a2a2a;
+    }
+
     .big-bank-logo {
       width: 72px;
       height: 72px;
@@ -597,6 +608,7 @@
       font-weight: 800;
       letter-spacing: 0.03em;
       flex-shrink: 0;
+      position: relative;
     }
 
     .big-bank-name {
@@ -604,6 +616,32 @@
       font-weight: 500;
       color: var(--text);
       line-height: 1.35;
+    }
+
+    .bank-soon-badge {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #161616;
+      border: 1px solid var(--border2);
+      color: #444;
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-top: -4px;
+    }
+
+    .bank-dev-badge {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 100px;
+      margin-top: -4px;
     }
 
     /* ─── Responsive ─────────────────────────────────────── */
@@ -791,22 +829,22 @@
 
   <script>
     // ── Bank catalogue ────────────────────────────────────────
-    // Provider IDs sourced from Prometeo sandbox GET /provider/.
-    // Colombia: only davivienda_pers_co is live in this sandbox account;
-    //           remaining CO banks show in UI but only work in mock mode.
+    // Live codes verified against Prometeo sandbox GET /provider/
+    // (2026-04-10). comingSoon:true tiles are shown greyed out.
     const BANKS_CO = [
       { id: "davivienda_pers_co",    name: "Davivienda",    initials: "DV", bg: "#CC0000", fg: "#fff"    },
-      { id: "bancolombia_co_retail", name: "Bancolombia",   initials: "BC", bg: "#FFD700", fg: "#1a1400" },
-      { id: "bogota_co_retail",      name: "Bco. Bogotá",   initials: "BB", bg: "#003F8A", fg: "#fff"    },
-      { id: "occidente_co_retail",   name: "Occidente",     initials: "BO", bg: "#006633", fg: "#fff"    },
-      { id: "bbva_co_retail",        name: "BBVA",          initials: "BV", bg: "#004B9E", fg: "#fff"    },
-      { id: "nequi_co_retail",       name: "Nequi",         initials: "NQ", bg: "#7B2FBE", fg: "#fff"    },
-      { id: "daviplata_co_retail",   name: "Daviplata",     initials: "DP", bg: "#FF6B00", fg: "#fff"    },
-      { id: "popular_co_retail",     name: "Bco. Popular",  initials: "BP", bg: "#8B0000", fg: "#fff"    },
-      { id: "av_villas_co_retail",   name: "AV Villas",     initials: "AV", bg: "#1E5FAD", fg: "#fff"    },
+      { id: "bancolombia_co_retail", name: "Bancolombia",   initials: "BC", bg: "#FFD700", fg: "#1a1400", comingSoon: true },
+      { id: "bogota_co_retail",      name: "Bco. Bogotá",   initials: "BB", bg: "#003F8A", fg: "#fff",    comingSoon: true },
+      { id: "occidente_co_retail",   name: "Occidente",     initials: "BO", bg: "#006633", fg: "#fff",    comingSoon: true },
+      { id: "bbva_co_retail",        name: "BBVA",          initials: "BV", bg: "#004B9E", fg: "#fff",    comingSoon: true },
+      { id: "nequi_co_retail",       name: "Nequi",         initials: "NQ", bg: "#7B2FBE", fg: "#fff",    comingSoon: true },
+      { id: "daviplata_co_retail",   name: "Daviplata",     initials: "DP", bg: "#FF6B00", fg: "#fff",    comingSoon: true },
+      { id: "popular_co_retail",     name: "Bco. Popular",  initials: "BP", bg: "#8B0000", fg: "#fff",    comingSoon: true },
+      { id: "av_villas_co_retail",   name: "AV Villas",     initials: "AV", bg: "#1E5FAD", fg: "#fff",    comingSoon: true },
     ];
 
-    // Mexico: real codes from Prometeo sandbox GET /provider/
+    // Mexico: live codes from Prometeo sandbox GET /provider/
+    // hsbc and inbursa are not in this sandbox account → comingSoon
     const BANKS_MX = [
       { id: "bbva_corp_mx",         name: "BBVA México",    initials: "BV", bg: "#004B9E", fg: "#fff"    },
       { id: "santander_pers_mx",    name: "Santander",      initials: "SA", bg: "#E30000", fg: "#fff"    },
@@ -815,12 +853,17 @@
       { id: "banorte_corp_mx",      name: "Banorte Emp.",   initials: "BE", bg: "#005C2B", fg: "#fff"    },
       { id: "scotia_corp_mx",       name: "Scotiabank",     initials: "SC", bg: "#C8001A", fg: "#fff"    },
       { id: "bitso_mx",             name: "Bitso",          initials: "BS", bg: "#1A1A2E", fg: "#7c6aff" },
-      { id: "hsbc_mx_retail",       name: "HSBC",           initials: "HS", bg: "#DB0011", fg: "#fff"    },
-      { id: "inbursa_mx_retail",    name: "Inbursa",        initials: "IN", bg: "#0055A5", fg: "#fff"    },
+      { id: "hsbc_mx_retail",       name: "HSBC",           initials: "HS", bg: "#DB0011", fg: "#fff",    comingSoon: true },
+      { id: "inbursa_mx_retail",    name: "Inbursa",        initials: "IN", bg: "#0055A5", fg: "#fff",    comingSoon: true },
     ];
 
+    // Dev-only test provider — shown when ?dev=1 is in the URL
+    const BANK_TEST = { id: "test", name: "Test Provider", initials: "T", bg: "#1a1a2e", fg: "#7c6aff", dev: true };
+
+    const isDev = new URLSearchParams(window.location.search).get("dev") === "1";
+
     const ALL_BANKS = {};
-    [...BANKS_CO, ...BANKS_MX].forEach(b => { ALL_BANKS[b.id] = b; });
+    [...BANKS_CO, ...BANKS_MX, BANK_TEST].forEach(b => { ALL_BANKS[b.id] = b; });
 
     // Banks that require a third auth field (OTP)
     const BANKS_REQUIRE_OTP = new Set(["bbva_corp_mx"]);
@@ -850,12 +893,29 @@
 
     // ── Render bank grids ─────────────────────────────────────
     function renderBankGrid(banks, containerId) {
-      document.getElementById(containerId).innerHTML = banks.map(b => `
-        <div class="big-bank-card" id="bcard-${b.id}" onclick="selectBank('${b.id}', this)">
-          <div class="big-bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
-          <div class="big-bank-name">${b.name}</div>
-        </div>
-      `).join("");
+      document.getElementById(containerId).innerHTML = banks.map(b => {
+        if (b.comingSoon) {
+          return `
+            <div class="big-bank-card coming-soon" id="bcard-${b.id}">
+              <div class="big-bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
+              <div class="big-bank-name">${b.name}</div>
+              <div class="bank-soon-badge">COMING SOON</div>
+            </div>`;
+        }
+        if (b.dev) {
+          return `
+            <div class="big-bank-card dev-provider" id="bcard-${b.id}" onclick="selectBank('${b.id}', this)">
+              <div class="big-bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
+              <div class="big-bank-name">${b.name}</div>
+              <div class="bank-dev-badge">DEV</div>
+            </div>`;
+        }
+        return `
+          <div class="big-bank-card" id="bcard-${b.id}" onclick="selectBank('${b.id}', this)">
+            <div class="big-bank-logo" style="background:${b.bg};color:${b.fg};">${b.initials}</div>
+            <div class="big-bank-name">${b.name}</div>
+          </div>`;
+      }).join("");
     }
 
     // ── Select bank → brief highlight → credentials screen ───
@@ -1001,7 +1061,7 @@
 
     // ── Init ──────────────────────────────────────────────────
     renderBankGrid(BANKS_CO, "bank-grid-co");
-    renderBankGrid(BANKS_MX, "bank-grid-mx");
+    renderBankGrid(isDev ? [...BANKS_MX, BANK_TEST] : BANKS_MX, "bank-grid-mx");
     lucide.createIcons();
   </script>
 </body>
