@@ -216,24 +216,42 @@ app.add_middleware(
 )
 
 
+# Static seed data — 18 merchants across all risk tiers
+_SEED_DATA = [
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000001", "name": "El Patio",                      "bank": "Davivienda",   "score": 77, "rec": "approve",  "limit": 300000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000002", "name": "Velásquez",                     "bank": "BBVA México",  "score": 51, "rec": "review",   "limit": 150000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000003", "name": "Tienda Nueva",                  "bank": "Banorte",      "score": 22, "rec": "decline",  "limit": 0},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000004", "name": "Supermercado Familiar Gómez",   "bank": "Bancolombia",  "score": 88, "rec": "approve",  "limit": 800000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000005", "name": "Farmacia San Rafael",            "bank": "BBVA México",  "score": 92, "rec": "approve",  "limit": 950000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000006", "name": "Hotel Boutique Casa Azul",       "bank": "Davivienda",   "score": 85, "rec": "approve",  "limit": 700000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000007", "name": "Restaurante La Fogata",          "bank": "Bancolombia",  "score": 74, "rec": "approve",  "limit": 350000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000008", "name": "Tienda Doña Rosa",               "bank": "Davivienda",   "score": 68, "rec": "approve",  "limit": 280000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000009", "name": "Ferretería El Tornillo",         "bank": "BBVA México",  "score": 72, "rec": "approve",  "limit": 320000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000010", "name": "Panadería San José",             "bank": "Banorte",      "score": 65, "rec": "approve",  "limit": 260000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000011", "name": "Miscelánea El Sol",              "bank": "Nequi",        "score": 71, "rec": "approve",  "limit": 300000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000012", "name": "Talleres Mecánicos García",      "bank": "Bancolombia",  "score": 55, "rec": "review",   "limit": 100000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000013", "name": "Papelería Central",              "bank": "Davivienda",   "score": 48, "rec": "review",   "limit": 80000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000014", "name": "Distribuidora Ortiz",            "bank": "BBVA México",  "score": 52, "rec": "review",   "limit": 90000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000015", "name": "Lavandería Expres",              "bank": "Banorte",      "score": 44, "rec": "review",   "limit": 70000},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000016", "name": "Cantina El Refugio",             "bank": "Nequi",        "score": 31, "rec": "decline",  "limit": 0},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000017", "name": "Taquería Los Compadres",         "bank": "Bancolombia",  "score": 25, "rec": "decline",  "limit": 0},
+    {"link_id": "a1b2c3d4-0001-0001-0001-000000000018", "name": "Servicio Técnico Rápido",        "bank": "Davivienda",   "score": 38, "rec": "decline",  "limit": 0},
+]
+
 @app.on_event("startup")
 def _seed_score_history() -> None:
-    """Pre-populate score history with mock profiles so the dashboard has data."""
-    from providers.mock_provider import MockProvider
-    dp = MockProvider()
-    merchants = dp.list_merchants()
-    banks = ["Davivienda", "BBVA México", "Banorte"]
-    for i, m in enumerate(merchants):
-        txns = dp.get_transactions(m["link_id"])
-        feats = extract_features(txns)
-        res = calculate_riel_score(feats)
-        # Backdate timestamps so weekly chart shows spread
-        ts = (dt.utcnow() - timedelta(days=i * 8)).isoformat() + "Z"
+    """Pre-populate score history with 18 mock profiles spread across last 8 weeks."""
+    import random
+    random.seed(42)
+    now = dt.utcnow()
+    for m in _SEED_DATA:
+        days_ago = random.randint(0, 56)
+        ts = (now - timedelta(days=days_ago)).isoformat() + "Z"
         with _history_lock:
             _score_history[m["link_id"]] = {
-                "score": res["riel_score"],
-                "recommendation": res["recommendation"],
-                "bank": banks[i],
+                "score": m["score"],
+                "recommendation": m["rec"],
+                "bank": m["bank"],
                 "timestamp": ts,
             }
 
