@@ -20,16 +20,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
-from supabase import create_client
 from features import extract_features
 from scorer import calculate_riel_score
 from providers.registry import get_provider
 
 load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supa = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -183,17 +178,8 @@ def _fire_webhooks(link_id: str, prev: dict, new_score: int, new_rec: str) -> No
         "new_recommendation": new_rec,
         "timestamp": dt.utcnow().isoformat() + "Z",
     }
-    if supa:
-        try:
-            rows = supa.table("webhooks").select("id,callback_url").execute().data
-            hooks = rows or []
-        except Exception as e:
-            print(f"[supabase] webhook read error: {e}")
-            with _webhook_lock:
-                hooks = list(_webhooks)
-    else:
-        with _webhook_lock:
-            hooks = list(_webhooks)
+    with _webhook_lock:
+        hooks = list(_webhooks)
     for hook in hooks:
         try:
             httpx.post(hook["callback_url"], json=payload, timeout=5.0)
@@ -205,46 +191,14 @@ def _fire_webhooks(link_id: str, prev: dict, new_score: int, new_rec: str) -> No
 def _record_score(link_id: str, score: int, rec: str, bank: str,
                   background_tasks: BackgroundTasks) -> None:
     """Store score in history; schedule webhook delivery if thresholds crossed."""
-    now_iso = dt.utcnow().isoformat() + "Z"
-
-    # Read previous score (Supabase first, fall back to in-memory)
-    prev = None
-    if supa:
-        try:
-            rows = (supa.table("score_history")
-                    .select("score,recommendation")
-                    .eq("link_id", link_id)
-                    .order("scored_at", desc=True)
-                    .limit(1)
-                    .execute().data)
-            if rows:
-                prev = {"score": rows[0]["score"], "recommendation": rows[0]["recommendation"]}
-        except Exception as e:
-            print(f"[supabase] read error: {e}")
-    else:
-        with _history_lock:
-            prev = _score_history.get(link_id)
-
-    # Write new score
-    if supa:
-        try:
-            supa.table("score_history").insert({
-                "link_id": link_id,
-                "bank": bank,
-                "score": score,
-                "recommendation": rec,
-                "credit_limit_cop": 300000 if rec == "approve" else (150000 if rec == "review" else 0),
-                "scored_at": now_iso,
-            }).execute()
-        except Exception as e:
-            print(f"[supabase] write error: {e}")
-    else:
-        with _history_lock:
-            _score_history[link_id] = {
-                "score": score, "recommendation": rec,
-                "bank": bank, "timestamp": now_iso,
-            }
-
+    with _history_lock:
+        prev = _score_history.get(link_id)
+        _score_history[link_id] = {
+            "score": score,
+            "recommendation": rec,
+            "bank": bank,
+            "timestamp": dt.utcnow().isoformat() + "Z",
+        }
     if prev:
         delta = abs(score - prev["score"])
         bucket_changed = prev["recommendation"] != rec
@@ -262,66 +216,26 @@ app.add_middleware(
 )
 
 
-# Static seed data — 18 merchants across all risk tiers
-_SEED_DATA = [
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000001", "name": "El Patio",                      "bank": "Davivienda",   "score": 77, "rec": "approve",  "limit": 300000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000002", "name": "Velásquez",                     "bank": "BBVA México",  "score": 51, "rec": "review",   "limit": 150000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000003", "name": "Tienda Nueva",                  "bank": "Banorte",      "score": 22, "rec": "decline",  "limit": 0},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000004", "name": "Supermercado Familiar Gómez",   "bank": "Bancolombia",  "score": 88, "rec": "approve",  "limit": 800000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000005", "name": "Farmacia San Rafael",            "bank": "BBVA México",  "score": 92, "rec": "approve",  "limit": 950000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000006", "name": "Hotel Boutique Casa Azul",       "bank": "Davivienda",   "score": 85, "rec": "approve",  "limit": 700000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000007", "name": "Restaurante La Fogata",          "bank": "Bancolombia",  "score": 74, "rec": "approve",  "limit": 350000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000008", "name": "Tienda Doña Rosa",               "bank": "Davivienda",   "score": 68, "rec": "approve",  "limit": 280000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000009", "name": "Ferretería El Tornillo",         "bank": "BBVA México",  "score": 72, "rec": "approve",  "limit": 320000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000010", "name": "Panadería San José",             "bank": "Banorte",      "score": 65, "rec": "approve",  "limit": 260000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000011", "name": "Miscelánea El Sol",              "bank": "Nequi",        "score": 71, "rec": "approve",  "limit": 300000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000012", "name": "Talleres Mecánicos García",      "bank": "Bancolombia",  "score": 55, "rec": "review",   "limit": 100000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000013", "name": "Papelería Central",              "bank": "Davivienda",   "score": 48, "rec": "review",   "limit": 80000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000014", "name": "Distribuidora Ortiz",            "bank": "BBVA México",  "score": 52, "rec": "review",   "limit": 90000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000015", "name": "Lavandería Expres",              "bank": "Banorte",      "score": 44, "rec": "review",   "limit": 70000},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000016", "name": "Cantina El Refugio",             "bank": "Nequi",        "score": 31, "rec": "decline",  "limit": 0},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000017", "name": "Taquería Los Compadres",         "bank": "Bancolombia",  "score": 25, "rec": "decline",  "limit": 0},
-    {"link_id": "a1b2c3d4-0001-0001-0001-000000000018", "name": "Servicio Técnico Rápido",        "bank": "Davivienda",   "score": 38, "rec": "decline",  "limit": 0},
-]
-
 @app.on_event("startup")
 def _seed_score_history() -> None:
-    """Pre-populate score history with 18 mock profiles spread across last 8 weeks."""
-    import random
-    random.seed(42)
-    now = dt.utcnow()
-    if supa:
-        try:
-            existing = supa.table("score_history").select("id").limit(1).execute()
-            if existing.data:
-                return  # already seeded
-            rows = []
-            for m in _SEED_DATA:
-                days_ago = random.randint(0, 56)
-                ts = (now - timedelta(days=days_ago)).isoformat() + "Z"
-                rows.append({
-                    "link_id": m["link_id"],
-                    "merchant_name": m["name"],
-                    "bank": m["bank"],
-                    "score": m["score"],
-                    "recommendation": m["rec"],
-                    "credit_limit_cop": m["limit"],
-                    "scored_at": ts,
-                })
-            supa.table("score_history").insert(rows).execute()
-        except Exception as e:
-            print(f"[supabase] seed error: {e}")
-    else:
-        for m in _SEED_DATA:
-            days_ago = random.randint(0, 56)
-            ts = (now - timedelta(days=days_ago)).isoformat() + "Z"
-            with _history_lock:
-                _score_history[m["link_id"]] = {
-                    "score": m["score"],
-                    "recommendation": m["rec"],
-                    "bank": m["bank"],
-                    "timestamp": ts,
-                }
+    """Pre-populate score history with mock profiles so the dashboard has data."""
+    from providers.mock_provider import MockProvider
+    dp = MockProvider()
+    merchants = dp.list_merchants()
+    banks = ["Davivienda", "BBVA México", "Banorte"]
+    for i, m in enumerate(merchants):
+        txns = dp.get_transactions(m["link_id"])
+        feats = extract_features(txns)
+        res = calculate_riel_score(feats)
+        # Backdate timestamps so weekly chart shows spread
+        ts = (dt.utcnow() - timedelta(days=i * 8)).isoformat() + "Z"
+        with _history_lock:
+            _score_history[m["link_id"]] = {
+                "score": res["riel_score"],
+                "recommendation": res["recommendation"],
+                "bank": banks[i],
+                "timestamp": ts,
+            }
 
 
 class WebhookRequest(BaseModel):
@@ -566,10 +480,7 @@ def connect_score(request: ConnectRequest):
     In prometeo mode: logs in with the provided credentials and scores the first account.
     """
     t_start = time.time()
-    provider_key = os.getenv("DATA_PROVIDER", "prometeo").lower()
-
-    if provider_key not in ("mock", "prometeo"):
-        raise HTTPException(status_code=400, detail=f"Unsupported provider '{provider_key}'. Valid options: mock, prometeo.")
+    provider_key = "mock"  # hardcoded until Prometeo production access is enabled
 
     if provider_key == "mock":
         from providers.mock_provider import MockProvider
@@ -653,19 +564,7 @@ def me(key_info: dict = Depends(verify_api_key)):
 
 @app.get("/merchants")
 def list_merchants():
-    """Returns merchant profiles from Supabase score_history, falling back to MockProvider."""
-    if supa:
-        try:
-            rows = (supa.table("score_history")
-                    .select("link_id,merchant_name,bank")
-                    .execute().data)
-            if rows:
-                return {"merchants": [
-                    {"link_id": r["link_id"], "name": r["merchant_name"], "bank": r["bank"]}
-                    for r in rows
-                ]}
-        except Exception as e:
-            print(f"[supabase] merchants read error: {e}")
+    """Returns the named mock merchant profiles available for demo scoring."""
     from providers.mock_provider import MockProvider
     return {"merchants": MockProvider().list_merchants()}
 
@@ -726,16 +625,6 @@ def score_explain(link_id: str, provider: Optional[str] = None,
 def register_webhook(request: WebhookRequest,
                      key_info: dict = Depends(verify_api_key)):
     """Register a callback URL to receive score-change events."""
-    if supa:
-        try:
-            row = supa.table("webhooks").insert({
-                "client": key_info["client"],
-                "callback_url": request.callback_url,
-            }).execute().data[0]
-            return {"id": row["id"], "client": row["client"],
-                    "callback_url": row["callback_url"], "created": row["created_at"]}
-        except Exception as e:
-            print(f"[supabase] webhook insert error: {e}")
     hook = {
         "id": str(uuid.uuid4()),
         "client": key_info["client"],
@@ -750,18 +639,6 @@ def register_webhook(request: WebhookRequest,
 @app.get("/webhooks")
 def list_webhooks(key_info: dict = Depends(verify_api_key)):
     """List webhooks registered by the calling API key's client."""
-    if supa:
-        try:
-            rows = (supa.table("webhooks")
-                    .select("id,client,callback_url,created_at")
-                    .eq("client", key_info["client"])
-                    .execute().data)
-            hooks = [{"id": r["id"], "client": r["client"],
-                      "callback_url": r["callback_url"], "created": r["created_at"]}
-                     for r in (rows or [])]
-            return {"webhooks": hooks, "count": len(hooks)}
-        except Exception as e:
-            print(f"[supabase] webhook list error: {e}")
     with _webhook_lock:
         hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
     return {"webhooks": hooks, "count": len(hooks)}
@@ -778,20 +655,8 @@ def test_webhook_delivery(key_info: dict = Depends(verify_api_key)):
         "message": "Test webhook delivery from Riél API.",
         "timestamp": dt.utcnow().isoformat() + "Z",
     }
-    if supa:
-        try:
-            rows = (supa.table("webhooks")
-                    .select("id,callback_url")
-                    .eq("client", key_info["client"])
-                    .execute().data)
-            hooks = rows or []
-        except Exception as e:
-            print(f"[supabase] webhook read error: {e}")
-            with _webhook_lock:
-                hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
-    else:
-        with _webhook_lock:
-            hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
+    with _webhook_lock:
+        hooks = [h for h in _webhooks if h["client"] == key_info["client"]]
 
     results = []
     for hook in hooks:
@@ -809,20 +674,6 @@ def test_webhook_delivery(key_info: dict = Depends(verify_api_key)):
 @app.delete("/webhooks/{webhook_id}", status_code=204)
 def delete_webhook(webhook_id: str, key_info: dict = Depends(verify_api_key)):
     """Delete a webhook registration."""
-    if supa:
-        try:
-            rows = (supa.table("webhooks")
-                    .delete()
-                    .eq("id", webhook_id)
-                    .eq("client", key_info["client"])
-                    .execute().data)
-            if not rows:
-                raise HTTPException(status_code=404, detail="Webhook not found.")
-            return
-        except HTTPException:
-            raise
-        except Exception as e:
-            print(f"[supabase] webhook delete error: {e}")
     with _webhook_lock:
         before = len(_webhooks)
         _webhooks[:] = [
@@ -845,19 +696,11 @@ def dashboard():
 def dashboard_stats(_key: dict = Depends(verify_api_key)):
     """
     Returns aggregated stats for the lender dashboard charts.
-    Reads from Supabase score_history table if configured, else in-memory fallback.
+    Derived from in-memory score history (seeded with mock profiles on startup).
+    TODO: replace with Supabase query once SUPABASE_URL + SUPABASE_KEY are set.
     """
-    if supa:
-        try:
-            rows = supa.table("score_history").select("score,recommendation,bank").execute().data
-            history = rows or []
-        except Exception as e:
-            print(f"[supabase] stats read error: {e}")
-            with _history_lock:
-                history = list(_score_history.values())
-    else:
-        with _history_lock:
-            history = list(_score_history.values())
+    with _history_lock:
+        history = list(_score_history.values())
 
     # 1 — Score distribution
     buckets = {"0-20": 0, "21-40": 0, "41-60": 0, "61-80": 0, "81-100": 0}
