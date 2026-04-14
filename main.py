@@ -566,7 +566,10 @@ def connect_score(request: ConnectRequest):
     In prometeo mode: logs in with the provided credentials and scores the first account.
     """
     t_start = time.time()
-    provider_key = "mock"  # hardcoded until Prometeo production access is enabled
+    provider_key = os.getenv("DATA_PROVIDER", "prometeo").lower()
+
+    if provider_key not in ("mock", "prometeo"):
+        raise HTTPException(status_code=400, detail=f"Unsupported provider '{provider_key}'. Valid options: mock, prometeo.")
 
     if provider_key == "mock":
         from providers.mock_provider import MockProvider
