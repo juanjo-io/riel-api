@@ -6,23 +6,28 @@
   <title>Riél — Lender Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:      #080808;
-      --surface: #111111;
-      --surface2:#161616;
-      --border:  #1e1e1e;
-      --border2: #2a2a2a;
-      --text:    #e2e2e2;
-      --muted:   #555;
-      --accent:  #7c6aff;
-      --green:   #4ade80;
-      --yellow:  #facc15;
-      --red:     #f87171;
+      --bg:         #f7f6f2;
+      --surface:    #ffffff;
+      --border:     rgba(40,37,29,0.10);
+      --shadow:     0 1px 3px rgba(26,25,22,0.07);
+      --text:       #1a1916;
+      --muted:      #6b6760;
+      --faint:      #a9a8a3;
+      --accent:     #01696f;
+      --accent-h:   #0c4e54;
+      --accent-bg:  #e0eeee;
+      --green:      #2d7a3a;
+      --green-bg:   #eaf5ec;
+      --yellow:     #9a5a00;
+      --yellow-bg:  #fef3e2;
+      --red:        #b92b2b;
+      --red-bg:     #fdeaea;
     }
 
     body {
@@ -40,20 +45,26 @@
       justify-content: space-between;
       padding: 24px 40px;
       border-bottom: 1px solid var(--border);
+      background: var(--surface);
     }
 
     .logo-group { display: flex; flex-direction: column; gap: 4px; }
-    .logo-name  { font-size: 1.6rem; font-weight: 800; letter-spacing: 0.08em; color: #fff; }
+    .logo-name  {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
     .logo-line  {
       height: 2px;
-      background: linear-gradient(to right, #6366F1, #06B6D4, #6366F1);
-      box-shadow: 0 0 10px rgba(6,182,212,0.5);
+      background: linear-gradient(to right, var(--accent), #06B6D4, var(--accent));
       border-radius: 2px;
     }
     .header-sub {
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.14em;
+      font-size: 0.72rem;
+      color: var(--faint);
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       margin-top: 4px;
     }
@@ -66,7 +77,7 @@
 
     .refresh-btn {
       background: none;
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--muted);
       font-family: inherit;
@@ -81,7 +92,6 @@
       width: 8px; height: 8px;
       border-radius: 50%;
       background: var(--green);
-      box-shadow: 0 0 6px rgba(74,222,128,0.6);
     }
 
     /* ── Page layout ─────────────────────────────────────────── */
@@ -98,23 +108,24 @@
     .kpi-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
       padding: 20px 24px;
     }
 
     .kpi-label {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--faint);
       margin-bottom: 8px;
     }
 
     .kpi-value {
       font-size: 2rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       line-height: 1;
     }
 
@@ -127,7 +138,22 @@
       font-size: 0.72rem;
       color: var(--muted);
       margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
+    .kpi-pill {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .kpi-pill.green  { background: var(--green-bg);  color: var(--green); }
+    .kpi-pill.yellow { background: var(--yellow-bg); color: var(--yellow); }
+    .kpi-pill.red    { background: var(--red-bg);    color: var(--red); }
+    .kpi-pill.accent { background: var(--accent-bg); color: var(--accent); }
 
     /* ── Charts grid ─────────────────────────────────────────── */
     .charts-grid {
@@ -142,7 +168,8 @@
     .chart-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
       padding: 24px 28px;
     }
 
@@ -151,7 +178,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--faint);
       margin-bottom: 20px;
     }
 
@@ -172,7 +199,7 @@
 
     .spinner {
       width: 18px; height: 18px;
-      border: 2px solid var(--border2);
+      border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -249,8 +276,8 @@
   const API_BASE = "";   // same origin
 
   const CHART_DEFAULTS = {
-    color: "#e2e2e2",
-    borderColor: "#1e1e1e",
+    color: "#6b6760",
+    borderColor: "rgba(40,37,29,0.06)",
     font: { family: "Inter, sans-serif", size: 12 },
   };
 
@@ -293,22 +320,22 @@
       <div class="kpi-card">
         <div class="kpi-label">Merchants Scored</div>
         <div class="kpi-value accent">${totalMerchants}</div>
-        <div class="kpi-sub">all time</div>
+        <div class="kpi-sub"><span class="kpi-pill accent">all time</span></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Approval Rate</div>
         <div class="kpi-value ${approvalRate >= 60 ? 'green' : approvalRate >= 40 ? 'yellow' : 'red'}">${approvalRate}%</div>
-        <div class="kpi-sub">${approved} approved</div>
+        <div class="kpi-sub"><span class="kpi-pill ${approvalRate >= 60 ? 'green' : approvalRate >= 40 ? 'yellow' : 'red'}">${approved} approved</span></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Under Review</div>
         <div class="kpi-value yellow">${reviewed}</div>
-        <div class="kpi-sub">need manual check</div>
+        <div class="kpi-sub"><span class="kpi-pill yellow">manual check</span></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Declined</div>
         <div class="kpi-value red">${declined}</div>
-        <div class="kpi-sub">below threshold</div>
+        <div class="kpi-sub"><span class="kpi-pill red">below threshold</span></div>
       </div>
     `;
   }
@@ -316,13 +343,13 @@
   function renderCharts(data) {
     document.getElementById("charts-grid").style.display = "";
 
-    const gridColor  = "#1e1e1e";
-    const tickColor  = "#555";
+    const gridColor  = "rgba(40,37,29,0.06)";
+    const tickColor  = "#a9a8a3";
 
     // ── 1. Score Distribution ──────────────────────────────────
     const distLabels = Object.keys(data.score_distribution);
     const distValues = Object.values(data.score_distribution);
-    const distColors = ["#f87171", "#f87171", "#facc15", "#4ade80", "#4ade80"];
+    const distColors = ["#b92b2b", "#e07b00", "#9a5a00", "#2d7a3a", "#01696f"];
 
     if (distChart) distChart.destroy();
     distChart = new Chart(document.getElementById("chart-dist"), {
@@ -371,11 +398,11 @@
         datasets: [{
           label: "Approval Rate %",
           data: wData,
-          borderColor: "#7c6aff",
-          backgroundColor: "rgba(124,106,255,0.12)",
+          borderColor: "#01696f",
+          backgroundColor: "rgba(1,105,111,0.10)",
           fill: true,
           tension: 0.35,
-          pointBackgroundColor: "#7c6aff",
+          pointBackgroundColor: "#01696f",
           pointRadius: 4,
           pointHoverRadius: 6,
         }],
@@ -404,7 +431,7 @@
     const bankLabels = Object.keys(data.avg_limit_by_bank);
     const bankValues = Object.values(data.avg_limit_by_bank);
     const bankColors = bankValues.map(v =>
-      v >= 300000 ? "#4ade80" : v >= 150000 ? "#facc15" : "#f87171"
+      v >= 300000 ? "#01696f" : v >= 150000 ? "#9a5a00" : "#b92b2b"
     );
 
     if (bankChart) bankChart.destroy();

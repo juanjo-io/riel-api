@@ -6,23 +6,28 @@
   <title>Riél — Connect your bank</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #080808;
-      --surface:  #111111;
-      --border:   #1e1e1e;
-      --border2:  #2a2a2a;
-      --text:     #e2e2e2;
-      --muted:    #555;
-      --accent:   #7c6aff;
-      --accent-d: #5a4fd4;
-      --green:    #4ade80;
-      --yellow:   #facc15;
-      --red:      #f87171;
+      --bg:         #f7f6f2;
+      --surface:    #ffffff;
+      --border:     rgba(40,37,29,0.10);
+      --shadow:     0 1px 3px rgba(26,25,22,0.07);
+      --text:       #1a1916;
+      --muted:      #6b6760;
+      --faint:      #a9a8a3;
+      --accent:     #01696f;
+      --accent-h:   #0c4e54;
+      --accent-bg:  #e0eeee;
+      --green:      #2d7a3a;
+      --green-bg:   #eaf5ec;
+      --yellow:     #9a5a00;
+      --yellow-bg:  #fef3e2;
+      --red:        #b92b2b;
+      --red-bg:     #fdeaea;
     }
 
     body {
@@ -40,22 +45,22 @@
     }
 
     .logo-name {
+      font-family: 'Instrument Serif', Georgia, serif;
       font-size: 2.6rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      color: #ffffff;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text);
     }
 
     .logo-line {
       height: 2px;
-      background: linear-gradient(to right, #6366F1, #06B6D4, #6366F1);
-      box-shadow: 0 0 12px rgba(6, 182, 212, 0.6);
+      background: linear-gradient(to right, var(--accent), #06B6D4, var(--accent));
       border-radius: 2px;
     }
 
     .header-sub {
       font-size: 0.72rem;
-      color: var(--muted);
+      color: var(--faint);
       letter-spacing: 0.12em;
       text-transform: uppercase;
       margin-top: 8px;
@@ -72,7 +77,8 @@
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 20px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
       padding: 40px;
       width: 100%;
       max-width: 560px;
@@ -92,7 +98,7 @@
 
     .back-btn {
       background: none;
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--muted);
       padding: 6px 12px;
@@ -103,7 +109,7 @@
       flex-shrink: 0;
     }
 
-    .back-btn:hover { color: var(--text); border-color: #444; }
+    .back-btn:hover { color: var(--text); border-color: var(--muted); }
 
     .nav-title {
       font-size: 0.78rem;
@@ -119,7 +125,7 @@
       width: 64px;
       height: 64px;
       border-radius: 18px;
-      background: #1a1a2e;
+      background: var(--accent-bg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -131,7 +137,7 @@
     .screen-title {
       font-size: 1.45rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       text-align: center;
       margin-bottom: 10px;
     }
@@ -157,7 +163,7 @@
       align-items: center;
       gap: 16px;
       padding: 16px 18px;
-      background: #0d0d0d;
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 12px;
     }
@@ -166,7 +172,7 @@
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      background: #161628;
+      background: var(--accent-bg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -187,7 +193,7 @@
 
     .security-note {
       font-size: 0.75rem;
-      color: #333;
+      color: var(--faint);
       text-align: center;
       margin-bottom: 22px;
     }
@@ -207,18 +213,23 @@
 
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-    .btn-primary { background: #1e3a1e; color: var(--green); border: 1px solid #2a4a2a; }
-    .btn-primary:hover:not(:disabled) { background: #254525; }
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(1,105,111,0.25);
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
 
     .btn-ghost {
       background: transparent;
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       color: var(--muted);
       font-size: 0.88rem;
       font-weight: 500;
       margin-top: 12px;
     }
-    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: #444; }
+    .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
 
     /* ─── Credentials screen ─────────────────────────────── */
     .selected-bank-row {
@@ -226,7 +237,7 @@
       align-items: center;
       gap: 12px;
       padding: 12px 14px;
-      background: #0d0d0d;
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       margin-bottom: 22px;
@@ -265,7 +276,7 @@
     input[type="text"], input[type="password"] {
       width: 100%;
       background: var(--bg);
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
       font-family: inherit;
@@ -282,8 +293,8 @@
       align-items: flex-start;
       gap: 8px;
       padding: 10px 12px;
-      background: #0c180c;
-      border: 1px solid #1a3a1a;
+      background: var(--green-bg);
+      border: 1px solid rgba(45,122,58,0.20);
       border-radius: 8px;
       margin-bottom: 20px;
     }
@@ -292,15 +303,15 @@
 
     .creds-note-text {
       font-size: 0.74rem;
-      color: #4a7a4a;
+      color: var(--green);
       line-height: 1.55;
     }
 
     .err {
-      background: #1e0e0e;
-      border: 1px solid #3a1515;
+      background: var(--red-bg);
+      border: 1px solid rgba(185,43,43,0.20);
       border-radius: 8px;
-      color: #e07070;
+      color: var(--red);
       font-size: 0.82rem;
       padding: 10px 14px;
       margin-bottom: 14px;
@@ -316,7 +327,7 @@
     .loading-spinner {
       width: 48px;
       height: 48px;
-      border: 3px solid var(--border2);
+      border: 3px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       margin: 0 auto 24px;
@@ -328,7 +339,7 @@
     .loading-title {
       font-size: 1rem;
       font-weight: 600;
-      color: #fff;
+      color: var(--text);
       margin-bottom: 6px;
     }
 
@@ -351,33 +362,33 @@
       align-items: center;
       gap: 5px;
       font-size: 0.8rem;
-      color: #333;
+      color: var(--faint);
       transition: color 0.3s;
       white-space: nowrap;
     }
 
-    .flow-step.active { color: var(--green); }
-    .flow-step.done   { color: #3a6a3a; }
+    .flow-step.active { color: var(--accent); }
+    .flow-step.done   { color: var(--green); }
 
     .flow-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: #222;
+      background: var(--border);
       flex-shrink: 0;
       transition: background 0.3s;
     }
 
-    .flow-step.active .flow-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
-    .flow-step.done   .flow-dot { background: #3a6a3a; }
+    .flow-step.active .flow-dot { background: var(--accent); }
+    .flow-step.done   .flow-dot { background: var(--green); }
 
-    .flow-arrow { color: #252525; font-size: 0.8rem; flex-shrink: 0; }
+    .flow-arrow { color: var(--faint); font-size: 0.8rem; flex-shrink: 0; }
 
     /* ─── Result screen ──────────────────────────────────── */
     .result-bank-badge {
       font-size: 0.72rem;
       font-weight: 600;
       color: var(--muted);
-      background: #0d0d0d;
+      background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 100px;
       padding: 4px 10px;
@@ -421,43 +432,43 @@
       white-space: nowrap;
     }
 
-    .badge.approve { background: #0e2218; color: var(--green);  border: 1px solid #1a3a28; }
-    .badge.review  { background: #221e00; color: var(--yellow); border: 1px solid #3a3200; }
-    .badge.decline { background: #220e0e; color: var(--red);    border: 1px solid #3a1818; }
+    .badge.approve { background: var(--green-bg);  color: var(--green);  border: 1px solid rgba(45,122,58,0.20); }
+    .badge.review  { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(154,90,0,0.20); }
+    .badge.decline { background: var(--red-bg);    color: var(--red);    border: 1px solid rgba(185,43,43,0.20); }
 
     .divider { height: 1px; background: var(--border); margin: 16px 0; }
 
     .pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
 
     .pill {
-      background: #161616;
-      border: 1px solid var(--border2);
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 6px;
       font-size: 0.82rem;
-      color: #888;
+      color: var(--muted);
       padding: 5px 10px;
     }
 
-    .pill strong { color: #ccc; }
+    .pill strong { color: var(--text); }
 
     .section-label {
       font-size: 0.68rem;
       font-weight: 600;
-      color: #333;
+      color: var(--faint);
       letter-spacing: 0.1em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
 
     table { width: 100%; border-collapse: collapse; }
-    tr { border-bottom: 1px solid #161616; }
+    tr { border-bottom: 1px solid var(--border); }
     tr:last-child { border-bottom: none; }
     td { padding: 8px 4px; font-size: 0.9rem; }
-    td:first-child { color: #666; }
+    td:first-child { color: var(--muted); }
     td:last-child  { text-align: right; font-variant-numeric: tabular-nums; }
 
     .bar-wrap { width: 60px; }
-    .bar-bg { background: #1a1a1a; border-radius: 3px; height: 6px; overflow: hidden; }
+    .bar-bg { background: var(--accent-bg); border-radius: 3px; height: 6px; overflow: hidden; }
     .bar-fill { background: var(--accent); height: 100%; border-radius: 3px; transition: width 0.5s ease; }
 
     /* ─── Full-page bank selection screen ────────────────── */
@@ -480,7 +491,7 @@
       align-items: center;
       gap: 8px;
       background: none;
-      border: 1px solid var(--border2);
+      border: 1px solid var(--border);
       border-radius: 10px;
       color: var(--muted);
       padding: 10px 20px;
@@ -491,13 +502,13 @@
       transition: color 0.15s, border-color 0.15s;
     }
 
-    .bank-page-back:hover { color: var(--text); border-color: #555; }
+    .bank-page-back:hover { color: var(--text); border-color: var(--muted); }
 
     .bank-step-pill {
       font-size: 0.72rem;
       font-weight: 600;
-      color: #333;
-      background: #111;
+      color: var(--muted);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 100px;
       padding: 6px 14px;
@@ -506,10 +517,11 @@
     }
 
     .bank-page-heading {
+      font-family: 'Instrument Serif', Georgia, serif;
       font-size: 2.6rem;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -0.03em;
+      font-weight: 400;
+      color: var(--text);
+      letter-spacing: -0.01em;
       line-height: 1.1;
       margin-bottom: 12px;
     }
@@ -525,9 +537,9 @@
     .bank-tabs {
       display: inline-flex;
       gap: 4px;
-      background: #0d0d0d;
-      border: 1px solid var(--border2);
-      border-radius: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 4px;
       margin-bottom: 36px;
     }
@@ -540,15 +552,15 @@
       font-weight: 600;
       color: var(--muted);
       padding: 12px 32px;
-      border-radius: 11px;
+      border-radius: 8px;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
 
     .bank-tab-btn.active {
-      background: #1a1a1a;
-      color: var(--text);
-      border: 1px solid var(--border2);
+      background: var(--accent-bg);
+      color: var(--accent);
+      border: 1px solid rgba(1,105,111,0.15);
     }
 
     /* Big bank grid */
@@ -559,9 +571,10 @@
     }
 
     .big-bank-card {
-      background: #0d0d0d;
+      background: var(--surface);
       border: 1.5px solid var(--border);
-      border-radius: 20px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
       padding: 32px 16px 26px;
       cursor: pointer;
       text-align: center;
@@ -574,16 +587,16 @@
 
     .big-bank-card:hover {
       border-color: var(--accent);
-      background: #111122;
+      background: var(--accent-bg);
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 24px rgba(1,105,111,0.12);
     }
 
     .big-bank-card.selected {
-      border-color: var(--green);
-      background: #091409;
+      border-color: var(--accent);
+      background: var(--accent-bg);
       transform: translateY(-2px);
-      box-shadow: 0 0 0 1px var(--green) inset, 0 8px 24px rgba(74,222,128,0.08);
+      box-shadow: 0 0 0 1px var(--accent) inset, 0 8px 24px rgba(1,105,111,0.12);
     }
 
     .big-bank-card.coming-soon {
@@ -594,7 +607,7 @@
 
     .big-bank-card.dev-provider {
       border-style: dashed;
-      border-color: #2a2a2a;
+      border-color: var(--faint);
     }
 
     .big-bank-logo {
@@ -623,9 +636,9 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      background: #161616;
-      border: 1px solid var(--border2);
-      color: #444;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--faint);
       padding: 2px 8px;
       border-radius: 100px;
       margin-top: -4px;
@@ -636,8 +649,8 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      background: #1a1a2e;
-      border: 1px solid #2a2a4a;
+      background: var(--accent-bg);
+      border: 1px solid rgba(1,105,111,0.20);
       color: var(--accent);
       padding: 2px 8px;
       border-radius: 100px;
@@ -669,7 +682,7 @@
       text-align: center;
       padding: 0 0 36px;
       font-size: 0.72rem;
-      color: #252525;
+      color: var(--faint);
     }
   </style>
 </head>
