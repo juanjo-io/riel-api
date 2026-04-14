@@ -650,7 +650,19 @@ def me(key_info: dict = Depends(verify_api_key)):
 
 @app.get("/merchants")
 def list_merchants():
-    """Returns the named mock merchant profiles available for demo scoring."""
+    """Returns merchant profiles from Supabase score_history, falling back to MockProvider."""
+    if supa:
+        try:
+            rows = (supa.table("score_history")
+                    .select("link_id,merchant_name,bank")
+                    .execute().data)
+            if rows:
+                return {"merchants": [
+                    {"link_id": r["link_id"], "name": r["merchant_name"], "bank": r["bank"]}
+                    for r in rows
+                ]}
+        except Exception as e:
+            print(f"[supabase] merchants read error: {e}")
     from providers.mock_provider import MockProvider
     return {"merchants": MockProvider().list_merchants()}
 
