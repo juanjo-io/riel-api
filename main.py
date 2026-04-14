@@ -58,8 +58,20 @@ VALID_API_KEYS: dict[str, dict] = _load_api_keys()
 
 
 def verify_api_key(x_api_key: Optional[str] = Header(default=None)) -> dict:
-    if x_api_key and x_api_key in VALID_API_KEYS:
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail={"error": "Invalid or missing API key"})
+
+    if supa:
+        try:
+            result = supa.table("api_keys").select("lender_name").eq("key_value", x_api_key).eq("active", True).execute()
+            if result.data:
+                return {"client": result.data[0]["lender_name"], "active": True}
+        except Exception as e:
+            print(f"[supabase] api key check error: {e}")
+
+    if x_api_key in VALID_API_KEYS:
         return VALID_API_KEYS[x_api_key]
+
     raise HTTPException(status_code=401, detail={"error": "Invalid or missing API key"})
 
 COP_TO_USD = 4000  # 1 USD ≈ 4 000 COP (fixed rate for sandbox)
