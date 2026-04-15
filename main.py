@@ -15,9 +15,10 @@ import httpx
 import stripe
 import requests
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from fastapi import BackgroundTasks, Cookie, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
 from supabase import create_client
@@ -26,6 +27,12 @@ from scorer import calculate_riel_score
 from providers.registry import get_provider
 
 load_dotenv()
+
+AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "dev-secret-change-in-prod")
+_serializer = URLSafeTimedSerializer(AUTH_SECRET_KEY)
+ALLOWED_LENDER_EMAILS: list = [
+    e.strip() for e in os.getenv("LENDER_EMAILS", "").split(",") if e.strip()
+]
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -846,15 +853,64 @@ def delete_webhook(webhook_id: str, key_info: dict = Depends(verify_api_key)):
         raise HTTPException(status_code=404, detail="Webhook not found.")
 
 
+# ── Lender magic-link auth ────────────────────────────────────────────────────
+
+class LoginRequest(BaseModel):
+    email: str
+
+
+def get_current_lender(lender_session: Optional[str] = Cookie(default=None)) -> str:
+    if not lender_session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        return _serializer.loads(lender_session, max_age=86400)
+    except (SignatureExpired, BadSignature):
+        raise HTTPException(status_code=401, detail="Session invalid or expired")
+
+
+@app.post("/lender/login-request")
+def lender_login_request(body: LoginRequest):
+    if body.email in ALLOWED_LENDER_EMAILS:
+        token = _serializer.dumps(body.email)
+        base = os.getenv("SELF_BASE_URL", "http://localhost:8000")
+        link = f"{base}/lender/magic-login?token={token}"
+        print(f"[magic-link] {link}")
+        return {"message": "If the email exists, we sent a link", "link": link}
+    return {"message": "If the email exists, we sent a link"}
+
+
+@app.get("/lender/magic-login")
+def lender_magic_login(token: str):
+    try:
+        email = _serializer.loads(token, max_age=900)
+    except SignatureExpired:
+        raise HTTPException(status_code=400, detail="Magic link expired")
+    except BadSignature:
+        raise HTTPException(status_code=400, detail="Magic link invalid")
+    resp = RedirectResponse(url="/dashboard", status_code=302)
+    session_token = _serializer.dumps(email)
+    resp.set_cookie("lender_session", session_token, httponly=True,
+                    secure=False, max_age=86400, samesite="lax")
+    return resp
+
+
+@app.post("/lender/logout")
+def lender_logout():
+    resp = JSONResponse({"message": "Logged out"})
+    resp.delete_cookie("lender_session")
+    return resp
+
+
 # ── Lender Dashboard ──────────────────────────────────────────────────────────
 
 @app.get("/dashboard")
-def dashboard():
+def dashboard(lender: str = Depends(get_current_lender)):
     return FileResponse(os.path.join(BASE_DIR, "dashboard.html"))
 
 
 @app.get("/dashboard/stats")
-def dashboard_stats(_key: dict = Depends(verify_api_key)):
+def dashboard_stats(_key: dict = Depends(verify_api_key),
+                    lender: str = Depends(get_current_lender)):
     """
     Returns aggregated stats for the lender dashboard charts.
     Reads from Supabase score_history table if configured, else in-memory fallback.
