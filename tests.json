@@ -1,0 +1,151 @@
+{
+  "description": "Riél API — smoke test suite. Run against localhost:8000 or Railway.",
+  "base_url": "http://localhost:8000",
+  "headers": {
+    "api_key": "riel_sk_int_46a500956dbeb8ce7874ff7e"
+  },
+  "tests": [
+    {
+      "id": "health",
+      "description": "Health check",
+      "method": "GET",
+      "path": "/health",
+      "expect_status": 200,
+      "expect_body_contains": ["status", "provider"]
+    },
+    {
+      "id": "score_approve",
+      "description": "Score El Patio → approve (score ~77)",
+      "method": "POST",
+      "path": "/score",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "body": {"link_id": "a1b2c3d4-0001-0001-0001-000000000001"},
+      "expect_status": 200,
+      "expect_body_contains": ["riel_score", "recommendation"],
+      "expect_values": {"recommendation": "approve"}
+    },
+    {
+      "id": "score_review",
+      "description": "Score Velásquez → review (score ~51)",
+      "method": "POST",
+      "path": "/score",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "body": {"link_id": "a1b2c3d4-0002-0002-0002-000000000002"},
+      "expect_status": 200,
+      "expect_values": {"recommendation": "review"}
+    },
+    {
+      "id": "score_decline",
+      "description": "Score Tienda Nueva → decline (score ~22)",
+      "method": "POST",
+      "path": "/score",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "body": {"link_id": "a1b2c3d4-0003-0003-0003-000000000003"},
+      "expect_status": 200,
+      "expect_values": {"recommendation": "decline"}
+    },
+    {
+      "id": "score_no_auth",
+      "description": "POST /score without API key → 401",
+      "method": "POST",
+      "path": "/score",
+      "body": {"link_id": "a1b2c3d4-0001-0001-0001-000000000001"},
+      "expect_status": 401
+    },
+    {
+      "id": "explain",
+      "description": "GET /score/{id}/explain returns explanation string",
+      "method": "GET",
+      "path": "/score/a1b2c3d4-0001-0001-0001-000000000001/explain",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "expect_status": 200,
+      "expect_body_contains": ["explanation", "riel_score"]
+    },
+    {
+      "id": "merchants",
+      "description": "GET /merchants returns merchant list",
+      "method": "GET",
+      "path": "/merchants",
+      "expect_status": 200,
+      "expect_body_contains": ["merchants"]
+    },
+    {
+      "id": "dashboard_no_auth",
+      "description": "GET /dashboard without cookie → 401",
+      "method": "GET",
+      "path": "/dashboard",
+      "expect_status": 401
+    },
+    {
+      "id": "dashboard_stats_no_auth",
+      "description": "GET /dashboard/stats without API key → 401",
+      "method": "GET",
+      "path": "/dashboard/stats",
+      "expect_status": 401
+    },
+    {
+      "id": "lender_login_unknown_email",
+      "description": "POST /lender/login-request with unknown email → 200 generic message (no leak)",
+      "method": "POST",
+      "path": "/lender/login-request",
+      "body": {"email": "unknown@example.com"},
+      "expect_status": 200,
+      "expect_values": {"message": "If the email exists, we sent a link"}
+    },
+    {
+      "id": "magic_link_invalid_token",
+      "description": "GET /lender/magic-login with bad token → 400",
+      "method": "GET",
+      "path": "/lender/magic-login?token=bad.token.value",
+      "expect_status": 400
+    },
+    {
+      "id": "webhooks_register",
+      "description": "POST /webhooks registers a callback URL",
+      "method": "POST",
+      "path": "/webhooks",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "body": {"callback_url": "https://webhook.site/test"},
+      "expect_status": 201,
+      "expect_body_contains": ["id", "callback_url"]
+    },
+    {
+      "id": "connect_score_mock",
+      "description": "POST /connect/score in mock mode returns score",
+      "method": "POST",
+      "path": "/connect/score",
+      "body": {"bank": "demo", "username": "demo", "password": "demo"},
+      "expect_status": 200,
+      "expect_body_contains": ["riel_score", "recommendation"]
+    },
+    {
+      "id": "x402_data_no_token",
+      "description": "GET /data/transactions without token → 402",
+      "method": "GET",
+      "path": "/data/transactions",
+      "expect_status": 402,
+      "expect_body_contains": ["challengeId"]
+    },
+    {
+      "id": "phase0_argentina_score",
+      "description": "[Phase 0] GET /argentina/score/{id} returns 5 Argentina metrics",
+      "method": "GET",
+      "path": "/argentina/score/a1b2c3d4-0001-0001-0001-000000000001",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "expect_status": 200,
+      "expect_body_contains": ["survival_runway_days", "real_cash_coverage", "fx_mismatch_exposure", "revenue_concentration", "deterioration_index", "action"],
+      "enabled": true
+    },
+    {
+      "id": "phase1_portfolio",
+      "description": "[Phase 1] GET /portfolio returns merchant list with Argentina metrics",
+      "method": "GET",
+      "path": "/portfolio",
+      "headers": {"X-API-Key": "{{api_key}}"},
+      "expect_status": 200,
+      "expect_body_contains": ["merchants", "action"],
+      "enabled": false,
+      "note": "Enable after Phase 1 is complete"
+    }
+  ]
+}

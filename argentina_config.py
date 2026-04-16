@@ -42,3 +42,19 @@ ACTION_STATUS_COLORS = {
 
 # ── FX detection keywords ─────────────────────────────────────────────────────
 FX_KEYWORDS = {"usd", "dolar", "dolares", "eur", "euro", "euros"}
+
+# ── Model metadata ─────────────────────────────────────────────────────────────
+# Bump MODEL_NAME on any threshold or logic change so API consumers can track
+# which version produced a given score.
+MODEL_NAME       = "riel_argentina_v0_2"
+LOOKBACK_WINDOWS = [30, 60, 90]   # days; used for trend windows and history snapshots
+REFRESH_MODE     = "batch"         # "batch" | "realtime"; batch = periodic full recompute
+
+# ── Review cadence (days between reviews by risk state) ───────────────────────
+REVIEW_CADENCE_DAYS = {
+    "opportunity":     30,
+    "healthy":         30,
+    "monitor":         14,
+    "review_now":      7,
+    "reduce_exposure": 7,
+}

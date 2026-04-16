@@ -27,6 +27,208 @@ MOCK_MERCHANTS_AR = {
 }
 
 
+# ── Review workflow mock state ────────────────────────────────────────────────
+# Keyed by link_id. All dates relative to 2026-04-16 reference date.
+# review_status: "unreviewed" | "in_review" | "reviewed"
+MOCK_REVIEW_STATE_AR = {
+    "a1b2c3d4-0004-0004-0004-000000000004": {
+        "review_status":   "reviewed",
+        "owner":           "j.lopez@riel.com",
+        "analyst_note":    "Strong panadería with consistent foot traffic. Revenue concentration "
+                           "within acceptable range. Recommend limit increase to ARS 500k.",
+        "last_review_date": "2026-04-08",
+    },
+    "a1b2c3d4-0005-0005-0005-000000000005": {
+        "review_status":   "in_review",
+        "owner":           "m.garcia@riel.com",
+        "analyst_note":    "FX exposure elevated due to imported hardware stock. Monitoring "
+                           "whether ARS depreciation passes through to end prices.",
+        "last_review_date": None,
+    },
+    "a1b2c3d4-0006-0006-0006-000000000006": {
+        "review_status":   "unreviewed",
+        "owner":           None,
+        "analyst_note":    None,
+        "last_review_date": None,
+    },
+    "a1b2c3d4-0007-0007-0007-000000000007": {
+        "review_status":   "reviewed",
+        "owner":           "j.lopez@riel.com",
+        "analyst_note":    "Stable kiosco with low burn. No concerns.",
+        "last_review_date": "2026-04-10",
+    },
+    "a1b2c3d4-0008-0008-0008-000000000008": {
+        "review_status":   "in_review",
+        "owner":           "m.garcia@riel.com",
+        "analyst_note":    "Short runway driven by school supplies seasonal slump. "
+                           "Owner indicated pending purchase order from school district.",
+        "last_review_date": "2026-03-28",   # 7d cadence → overdue since 2026-04-04
+    },
+    "a1b2c3d4-0009-0009-0009-000000000009": {
+        "review_status":   "unreviewed",
+        "owner":           None,
+        "analyst_note":    None,
+        "last_review_date": None,
+    },
+    "a1b2c3d4-0010-0010-0010-000000000010": {
+        "review_status":   "reviewed",
+        "owner":           "m.garcia@riel.com",
+        "analyst_note":    "Override in place. Owner confirmed new long-term supply "
+                           "contract signed 2026-04-09. Runway recovery expected within 45 days.",
+        "last_review_date": "2026-04-10",
+    },
+    "a1b2c3d4-0011-0011-0011-000000000011": {
+        "review_status":   "reviewed",
+        "owner":           "j.lopez@riel.com",
+        "analyst_note":    "Healthy carnicería. Consistent inflows, low FX risk.",
+        "last_review_date": "2026-04-02",
+    },
+    "a1b2c3d4-0012-0012-0012-000000000012": {
+        "review_status":   "unreviewed",
+        "owner":           None,
+        "analyst_note":    None,
+        "last_review_date": None,   # never reviewed → overdue immediately
+    },
+    "a1b2c3d4-0013-0013-0013-000000000013": {
+        "review_status":   "reviewed",
+        "owner":           "j.lopez@riel.com",
+        "analyst_note":    "Growing indumentaria brand. Opportunity to increase limit.",
+        "last_review_date": "2026-04-12",
+    },
+}
+
+# ── Analyst overrides (demo mode only) ───────────────────────────────────────
+# These override the model recommendation for display; scoring logic is unchanged.
+MOCK_OVERRIDES_AR = {
+    "a1b2c3d4-0010-0010-0010-000000000010": {
+        "original_recommendation": "reduce_exposure",
+        "current_recommendation":  "monitor",
+        "override_reason":         "Owner confirmed new long-term supply contract signed "
+                                   "2026-04-09. Runway expected to recover within 45 days. "
+                                   "Risk team agrees to hold at Monitor pending next batch.",
+        "override_timestamp":      "2026-04-10T14:23:00",
+        "override_by":             "m.garcia@riel.com",
+    },
+    "a1b2c3d4-0012-0012-0012-000000000012": {
+        "original_recommendation": "review_now",
+        "current_recommendation":  "reduce_exposure",
+        "override_reason":         "Field visit 2026-04-14 confirmed equipment is leased "
+                                   "not owned; off-balance obligations not captured by model. "
+                                   "Actual liquidity risk is higher than model signal.",
+        "override_timestamp":      "2026-04-14T09:15:00",
+        "override_by":             "m.garcia@riel.com",
+    },
+}
+
+
+# ── Case / action log (demo mode only) ───────────────────────────────────────
+# Keyed by link_id. Each entry is a list of case events ordered oldest-first.
+# event_type: flag_raised | analyst_reviewed | recommendation_confirmed |
+#             no_action_taken | reduce_exposure_recommended | topup_candidate_flagged
+MOCK_CASE_LOG_AR = {
+    # Panadería San Martín — positive trajectory, flagged for top-up
+    "a1b2c3d4-0004-0004-0004-000000000004": [
+        {
+            "date":       "2026-03-15",
+            "event_type": "topup_candidate_flagged",
+            "note":       "Cash-flow positive for 3 consecutive months. Flagged as limit-increase candidate.",
+            "analyst":    "j.lopez@riel.com",
+        },
+        {
+            "date":       "2026-04-08",
+            "event_type": "analyst_reviewed",
+            "note":       "Full review completed. All metrics green. Limit increase to ARS 500k recommended.",
+            "analyst":    "j.lopez@riel.com",
+        },
+        {
+            "date":       "2026-04-08",
+            "event_type": "recommendation_confirmed",
+            "note":       "Credit committee approved limit increase to ARS 500k.",
+            "analyst":    "j.lopez@riel.com",
+        },
+    ],
+    # Librería Central — short runway, seasonal slump, overdue review
+    "a1b2c3d4-0008-0008-0008-000000000008": [
+        {
+            "date":       "2026-03-15",
+            "event_type": "flag_raised",
+            "note":       "Runway fell below 30-day threshold. Case opened for review.",
+            "analyst":    None,
+        },
+        {
+            "date":       "2026-03-28",
+            "event_type": "analyst_reviewed",
+            "note":       "Partial review: owner confirmed school-supply seasonal slump. "
+                          "Pending purchase order from school district. Review paused.",
+            "analyst":    "m.garcia@riel.com",
+        },
+        {
+            "date":       "2026-04-15",
+            "event_type": "no_action_taken",
+            "note":       "Purchase order not yet confirmed. Case remains open, review overdue.",
+            "analyst":    "m.garcia@riel.com",
+        },
+    ],
+    # Verdulería La Fresca — reduce_exposure with analyst override
+    "a1b2c3d4-0010-0010-0010-000000000010": [
+        {
+            "date":       "2026-04-05",
+            "event_type": "flag_raised",
+            "note":       "Runway critical and deterioration index severe. Escalation triggered automatically.",
+            "analyst":    None,
+        },
+        {
+            "date":       "2026-04-10",
+            "event_type": "analyst_reviewed",
+            "note":       "Owner interview and field visit completed. New long-term supply contract presented.",
+            "analyst":    "m.garcia@riel.com",
+        },
+        {
+            "date":       "2026-04-10",
+            "event_type": "reduce_exposure_recommended",
+            "note":       "Model maintains Reduce Exposure. Override applied: Monitor pending runway recovery.",
+            "analyst":    "m.garcia@riel.com",
+        },
+    ],
+    # Fotocopias Rápidas — unreviewed, field visit escalated to reduce_exposure
+    "a1b2c3d4-0012-0012-0012-000000000012": [
+        {
+            "date":       "2026-04-14",
+            "event_type": "flag_raised",
+            "note":       "Field visit initiated after model flagged Review Now. Off-balance obligations identified.",
+            "analyst":    "m.garcia@riel.com",
+        },
+        {
+            "date":       "2026-04-14",
+            "event_type": "analyst_reviewed",
+            "note":       "Equipment confirmed leased, not owned. Off-balance obligations not captured by model.",
+            "analyst":    "m.garcia@riel.com",
+        },
+        {
+            "date":       "2026-04-14",
+            "event_type": "reduce_exposure_recommended",
+            "note":       "Override applied: Reduce Exposure. Actual liquidity risk exceeds model signal.",
+            "analyst":    "m.garcia@riel.com",
+        },
+    ],
+    # Indumentaria Moda BA — growing brand, top-up flagged
+    "a1b2c3d4-0013-0013-0013-000000000013": [
+        {
+            "date":       "2026-04-12",
+            "event_type": "analyst_reviewed",
+            "note":       "Quarterly review completed. Positive trajectory confirmed, inflows stable.",
+            "analyst":    "j.lopez@riel.com",
+        },
+        {
+            "date":       "2026-04-12",
+            "event_type": "topup_candidate_flagged",
+            "note":       "Flagged for limit increase to ARS 750k pending credit committee review.",
+            "analyst":    "j.lopez@riel.com",
+        },
+    ],
+}
+
+
 def _tx(link_id, days_ago, amount, counterparty, category):
     today = date.today()
     return {

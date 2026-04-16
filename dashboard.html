@@ -3,31 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riél — Lender Dashboard</title>
+  <title>Riél — Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:         #f7f6f2;
-      --surface:    #ffffff;
-      --border:     rgba(40,37,29,0.10);
-      --shadow:     0 1px 3px rgba(26,25,22,0.07);
-      --text:       #1a1916;
-      --muted:      #6b6760;
-      --faint:      #a9a8a3;
-      --accent:     #01696f;
-      --accent-h:   #0c4e54;
-      --accent-bg:  #e0eeee;
-      --green:      #2d7a3a;
-      --green-bg:   #eaf5ec;
-      --yellow:     #9a5a00;
-      --yellow-bg:  #fef3e2;
-      --red:        #b92b2b;
-      --red-bg:     #fdeaea;
+      --bg:          #f7f6f2;
+      --surface:     #ffffff;
+      --border:      rgba(40,37,29,0.10);
+      --shadow:      0 1px 3px rgba(26,25,22,0.07);
+      --text:        #1a1916;
+      --muted:       #6b6760;
+      --faint:       #a9a8a3;
+      --accent:      #01696f;
+      --accent-h:    #0c4e54;
+      --accent-bg:   #e0eeee;
+      /* risk state colors */
+      --c-teal:      #01696f;  --c-teal-bg:   #e0eeee;
+      --c-green:     #2d7a3a;  --c-green-bg:  #eaf5ec;
+      --c-amber:     #9a5a00;  --c-amber-bg:  #fef3e2;
+      --c-orange:    #b94a00;  --c-orange-bg: #fff0e8;
+      --c-red:       #b92b2b;  --c-red-bg:    #fdeaea;
     }
 
     body {
@@ -43,18 +42,20 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 24px 40px;
+      padding: 20px 40px;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
-    .logo-group { display: flex; flex-direction: column; gap: 4px; }
+    .logo-group { display: flex; flex-direction: column; gap: 3px; }
     .logo-name  {
       font-family: 'Instrument Serif', Georgia, serif;
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 400;
       letter-spacing: 0.02em;
-      color: var(--text);
     }
     .logo-line  {
       height: 2px;
@@ -62,141 +63,395 @@
       border-radius: 2px;
     }
     .header-sub {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--faint);
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .header-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
-    .refresh-btn {
+    .header-btn {
       background: none;
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--muted);
       font-family: inherit;
-      font-size: 0.8rem;
-      padding: 8px 14px;
+      font-size: 0.78rem;
+      padding: 7px 13px;
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s;
     }
-    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .header-btn:hover { border-color: var(--accent); color: var(--accent); }
 
     .status-dot {
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--green);
+      background: var(--c-green);
     }
 
-    /* ── Page layout ─────────────────────────────────────────── */
-    main { padding: 32px 40px 64px; max-width: 1200px; margin: 0 auto; }
+    /* ── Layout ──────────────────────────────────────────────── */
+    main { padding: 28px 40px 64px; max-width: 1280px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 14px;
+    }
 
     /* ── KPI strip ───────────────────────────────────────────── */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
     }
 
     .kpi-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       box-shadow: var(--shadow);
-      padding: 20px 24px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: border-color 0.15s;
     }
+    .kpi-card:hover { border-color: var(--accent); }
+    .kpi-card.active { border-color: var(--accent); background: var(--accent-bg); }
 
     .kpi-label {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: 600;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--faint);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .kpi-value {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      color: var(--text);
       line-height: 1;
     }
 
-    .kpi-value.green  { color: var(--green); }
-    .kpi-value.yellow { color: var(--yellow); }
-    .kpi-value.red    { color: var(--red); }
-    .kpi-value.accent { color: var(--accent); }
-
     .kpi-sub {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--muted);
-      margin-top: 6px;
+      margin-top: 4px;
+    }
+
+    /* ── Alerts panel ────────────────────────────────────────── */
+    .alerts-panel {
+      background: var(--c-red-bg);
+      border: 1px solid rgba(185,43,43,0.20);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+
+    .alerts-panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--c-red);
+      margin-bottom: 10px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(185,43,43,0.10);
+      font-size: 0.82rem;
+    }
+    .alert-item:last-child { border-bottom: none; }
+
+    .alert-merchant {
+      font-weight: 600;
+      color: var(--text);
+      min-width: 160px;
+      flex-shrink: 0;
+    }
+
+    .alert-msg { color: var(--muted); }
+
+    .alert-sev {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .alert-sev.critical { background: var(--c-red-bg); color: var(--c-red); }
+    .alert-sev.warning  { background: var(--c-amber-bg); color: var(--c-amber); }
+
+    /* ── Filter bar ──────────────────────────────────────────── */
+    .filter-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
 
-    .kpi-pill {
-      display: inline-block;
-      font-size: 0.65rem;
-      font-weight: 600;
-      padding: 2px 7px;
-      border-radius: 20px;
+    .filter-bar select,
+    .filter-bar input {
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8rem;
+      padding: 7px 11px;
+      outline: none;
+      transition: border-color 0.15s;
     }
-    .kpi-pill.green  { background: var(--green-bg);  color: var(--green); }
-    .kpi-pill.yellow { background: var(--yellow-bg); color: var(--yellow); }
-    .kpi-pill.red    { background: var(--red-bg);    color: var(--red); }
-    .kpi-pill.accent { background: var(--accent-bg); color: var(--accent); }
+    .filter-bar select:focus,
+    .filter-bar input:focus { border-color: var(--accent); }
 
-    /* ── Charts grid ─────────────────────────────────────────── */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 20px;
+    .filter-count {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--muted);
     }
 
-    .chart-full { grid-column: 1 / -1; }
-
-    .chart-card {
+    /* ── Watchlist table ─────────────────────────────────────── */
+    .table-wrap {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       box-shadow: var(--shadow);
-      padding: 24px 28px;
+      overflow: hidden;
     }
 
-    .chart-title {
-      font-size: 0.72rem;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      font-size: 0.65rem;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--faint);
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th.num { text-align: right; }
+    thead th.sortable { cursor: pointer; user-select: none; }
+    thead th.sortable:hover { color: var(--accent); }
+    thead th.sorted { color: var(--accent); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafaf8; }
+
+    td {
+      padding: 13px 14px;
+      font-size: 0.84rem;
+      vertical-align: middle;
+    }
+    td.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .merchant-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .merchant-bank {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .sector-tag {
+      display: inline-block;
+      font-size: 0.66rem;
+      font-weight: 500;
+      text-transform: capitalize;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      color: var(--muted);
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 4px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .state-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    .badge-teal   { background: var(--c-teal-bg);   color: var(--c-teal); }
+    .badge-teal .dot   { background: var(--c-teal); }
+    .badge-green  { background: var(--c-green-bg);  color: var(--c-green); }
+    .badge-green .dot  { background: var(--c-green); }
+    .badge-amber  { background: var(--c-amber-bg);  color: var(--c-amber); }
+    .badge-amber .dot  { background: var(--c-amber); }
+    .badge-orange { background: var(--c-orange-bg); color: var(--c-orange); }
+    .badge-orange .dot { background: var(--c-orange); }
+    .badge-red    { background: var(--c-red-bg);    color: var(--c-red); }
+    .badge-red .dot    { background: var(--c-red); }
+
+    .metric-light {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+      flex-shrink: 0;
+    }
+    .light-green  { background: var(--c-green); }
+    .light-amber  { background: var(--c-amber); }
+    .light-red    { background: var(--c-red); }
+
+    .det-arrow {
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    .det-up   { color: var(--c-green); }
+    .det-flat { color: var(--faint); }
+    .det-down { color: var(--c-red); }
+
+    /* ── Risk/Recommendation cell ───────────────────────────── */
+    .risk-label {
+      font-size: 0.70rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 4px;
+    }
+    .risk-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .risk-dot-teal   { background: var(--c-teal); }
+    .risk-dot-green  { background: var(--c-green); }
+    .risk-dot-amber  { background: var(--c-amber); }
+    .risk-dot-orange { background: var(--c-orange); }
+    .risk-dot-red    { background: var(--c-red); }
+
+    .rec-pill {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .rec-teal   { background: var(--c-teal-bg);   color: var(--c-teal); }
+    .rec-green  { background: var(--c-green-bg);  color: var(--c-green); }
+    .rec-amber  { background: var(--c-amber-bg);  color: var(--c-amber); }
+    .rec-orange { background: var(--c-orange-bg); color: var(--c-orange); }
+    .rec-red    { background: var(--c-red-bg);    color: var(--c-red); }
+
+    /* ── Change column ───────────────────────────────────────── */
+    .change-up   { color: var(--c-green); font-size: 0.78rem; }
+    .change-flat { color: var(--faint);   font-size: 0.78rem; }
+    .change-down { color: var(--c-red);   font-size: 0.78rem; }
+
+    /* ── Model metadata line ────────────────────────────────────── */
+    .model-line {
+      font-size: 0.68rem;
+      color: var(--faint);
+      letter-spacing: 0.04em;
       margin-bottom: 20px;
     }
 
-    .chart-wrap { position: relative; }
-    .chart-wrap.tall  { height: 260px; }
-    .chart-wrap.short { height: 220px; }
+    /* ── Portfolio summary panel ─────────────────────────────────── */
+    .summary-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 18px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .summary-label { color: var(--muted); font-weight: 500; }
+    .summary-sep   { color: var(--faint); }
+    .summary-stat  { font-weight: 600; }
+    .summary-stat.pos { color: var(--c-green); }
+    .summary-stat.neg { color: var(--c-red); }
+    .summary-stat.neu { color: var(--muted); }
 
-    /* ── Loading / error state ───────────────────────────────── */
+    /* ── Escalation flag ────────────────────────────────────── */
+    .escalation-flag {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 3px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      margin-left: 5px;
+      letter-spacing: 0.05em;
+      vertical-align: middle;
+    }
+
+    /* ── Review indicators ───────────────────────────────────── */
+    .review-indicator {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .review-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .review-dot-unreviewed { background: var(--faint); }
+    .review-dot-in_review  { background: var(--c-amber); }
+    .review-dot-reviewed   { background: var(--c-green); }
+    .review-overdue        { color: var(--c-red); font-weight: 600; }
+
+    /* ── Loading / error ─────────────────────────────────────── */
     .loading {
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 200px;
+      padding: 60px 0;
       color: var(--muted);
       font-size: 0.85rem;
       gap: 10px;
     }
-
     .spinner {
       width: 18px; height: 18px;
       border: 2px solid var(--border);
@@ -204,18 +459,18 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .error-msg { color: var(--red); font-size: 0.82rem; }
+    .error-msg { color: var(--c-red); font-size: 0.82rem; text-align: center; padding: 40px; }
 
     /* ── Responsive ──────────────────────────────────────────── */
-    @media (max-width: 800px) {
-      header { padding: 20px; }
+    @media (max-width: 900px) {
+      header { padding: 16px 20px; }
       main   { padding: 20px 16px 48px; }
-      .kpi-row { grid-template-columns: 1fr 1fr; }
-      .charts-grid { grid-template-columns: 1fr; }
-      .chart-full { grid-column: auto; }
+      .kpi-row { grid-template-columns: repeat(3, 1fr); }
+      td.hide-sm, th.hide-sm { display: none; }
+    }
+    @media (max-width: 600px) {
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -225,256 +480,459 @@
   <div class="logo-group">
     <div class="logo-name">Riél</div>
     <div class="logo-line"></div>
-    <div class="header-sub">Lender Dashboard · Portfolio Intelligence</div>
+    <div class="header-sub">Portfolio Intelligence · Argentina</div>
   </div>
   <div class="header-right">
     <div class="status-dot" id="status-dot" title="Live"></div>
-    <button class="refresh-btn" onclick="loadStats()">Refresh</button>
+    <button class="header-btn" onclick="loadPortfolio()">Refresh</button>
+    <button class="header-btn" onclick="logout()">Log out</button>
   </div>
 </header>
 
 <main>
-  <!-- KPI strip -->
-  <div class="kpi-row" id="kpi-row">
-    <div class="loading" style="grid-column:1/-1">
-      <div class="spinner"></div> Loading dashboard…
-    </div>
+  <div id="loading-state" class="loading">
+    <div class="spinner"></div> Loading portfolio…
   </div>
+  <div id="main-content" style="display:none;">
 
-  <!-- Charts -->
-  <div class="charts-grid" id="charts-grid" style="display:none;">
+    <!-- Model metadata -->
+    <div class="model-line" id="model-meta-line"></div>
 
-    <!-- Score distribution -->
-    <div class="chart-card">
-      <div class="chart-title">Score Distribution</div>
-      <div class="chart-wrap tall">
-        <canvas id="chart-dist"></canvas>
-      </div>
+    <!-- KPI strip -->
+    <div class="section-title">Portfolio Overview</div>
+    <div class="kpi-row" id="kpi-row"></div>
+
+    <!-- Portfolio summary -->
+    <div id="portfolio-summary" style="display:none;"></div>
+
+    <!-- Ops summary (review queue) -->
+    <div id="ops-summary" style="display:none;"></div>
+
+    <!-- Alerts panel -->
+    <div id="alerts-panel" style="display:none;"></div>
+
+    <!-- Watchlist -->
+    <div class="section-title">Merchant Watchlist</div>
+    <div class="filter-bar">
+      <select id="filter-action" onchange="applyFilters()">
+        <option value="">All states</option>
+        <option value="reduce_exposure">Reduce Exposure</option>
+        <option value="review_now">Review Now</option>
+        <option value="monitor">Monitor</option>
+        <option value="healthy">Healthy</option>
+        <option value="opportunity">Opportunity</option>
+      </select>
+      <select id="filter-sector" onchange="applyFilters()">
+        <option value="">All sectors</option>
+      </select>
+      <span class="filter-count" id="filter-count"></span>
     </div>
 
-    <!-- Average credit limit by bank -->
-    <div class="chart-card">
-      <div class="chart-title">Avg Credit Limit by Bank</div>
-      <div class="chart-wrap tall">
-        <canvas id="chart-bank"></canvas>
-      </div>
-    </div>
-
-    <!-- Approval rate over time (full width) -->
-    <div class="chart-card chart-full">
-      <div class="chart-title">Approval Rate — Last 8 Weeks (%)</div>
-      <div class="chart-wrap short">
-        <canvas id="chart-weekly"></canvas>
-      </div>
+    <div class="table-wrap">
+      <table id="watchlist-table">
+        <thead>
+          <tr>
+            <th>Merchant</th>
+            <th>Sector</th>
+            <th>Risk / Recommendation</th>
+            <th class="num sortable" data-col="survival_runway_days" onclick="sortBy('survival_runway_days')">Runway</th>
+            <th class="num sortable hide-sm" data-col="real_cash_coverage" onclick="sortBy('real_cash_coverage')">Coverage</th>
+            <th class="num sortable hide-sm" data-col="fx_mismatch_exposure" onclick="sortBy('fx_mismatch_exposure')">FX%</th>
+            <th class="num sortable" data-col="deterioration_index" onclick="sortBy('deterioration_index')">Trend</th>
+            <th class="hide-sm">Change</th>
+          </tr>
+        </thead>
+        <tbody id="watchlist-body"></tbody>
+      </table>
     </div>
 
   </div>
 </main>
 
 <script>
-  const API_KEY  = "riel_sk_demo_28cf009ae77c8667587968f5";
-  const API_BASE = "";   // same origin
+  // ── State ──────────────────────────────────────────────────────────────────
+  let _portfolio = null;
+  let _filtered  = [];
+  let _sortCol   = "__urgency__";
+  let _sortAsc   = true;
 
-  const CHART_DEFAULTS = {
-    color: "#6b6760",
-    borderColor: "rgba(40,37,29,0.06)",
-    font: { family: "Inter, sans-serif", size: 12 },
+  const ACTION_ORDER = {
+    "reduce_exposure": 0,
+    "review_now":      1,
+    "monitor":         2,
+    "healthy":         3,
+    "opportunity":     4,
   };
 
-  Chart.defaults.color          = CHART_DEFAULTS.color;
-  Chart.defaults.borderColor    = CHART_DEFAULTS.borderColor;
-  Chart.defaults.font.family    = "Inter, sans-serif";
-  Chart.defaults.font.size      = 12;
+  const BADGE_CLASS = {
+    "teal":   "badge-teal",
+    "green":  "badge-green",
+    "amber":  "badge-amber",
+    "orange": "badge-orange",
+    "red":    "badge-red",
+  };
 
-  let distChart, weeklyChart, bankChart;
+  const ACTION_LABEL_SHORT = {
+    "opportunity":     "Opportunity",
+    "healthy":         "Healthy",
+    "monitor":         "Monitor",
+    "review_now":      "Review Now",
+    "reduce_exposure": "Reduce Exposure",
+  };
 
-  async function loadStats() {
-    document.getElementById("status-dot").style.background = "#facc15";
+  // Maps action → { riskText, color (CSS var name without --) }
+  const RISK_LEVEL = {
+    "reduce_exposure": { text: "High risk",    color: "red" },
+    "review_now":      { text: "High risk",    color: "orange" },
+    "monitor":         { text: "Medium risk",  color: "amber" },
+    "healthy":         { text: "Low risk",     color: "green" },
+    "opportunity":     { text: "Opportunity",  color: "teal" },
+  };
 
-    try {
-      const res = await fetch(`${API_BASE}/dashboard/stats`, {
-        headers: { "X-API-Key": API_KEY },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      renderKPIs(data);
-      renderCharts(data);
-      document.getElementById("status-dot").style.background = "#4ade80";
-    } catch (e) {
-      document.getElementById("kpi-row").innerHTML =
-        `<div class="error-msg" style="grid-column:1/-1">Failed to load stats: ${e.message}</div>`;
-      document.getElementById("status-dot").style.background = "#f87171";
+  // Derive the single most important change signal from portfolio-row data.
+  // Returns { text, dir: "up" | "flat" | "down" } or null.
+  function topChange(m) {
+    const det = m.deterioration_index ?? 0;
+    const drivers = m.top_risk_drivers || [];
+
+    // If top driver is deterioration (or no non-det drivers), express as revenue %
+    const nonDet = drivers.filter(d => d.metric !== "deterioration_index");
+    if (nonDet.length === 0) {
+      if (Math.abs(det) < 0.05) return { text: "Stable", dir: "flat" };
+      const pct = Math.abs(Math.round(det * 100));
+      return det < 0
+        ? { text: `Revenue −${pct}%`, dir: "down" }
+        : { text: `Revenue +${pct}%`, dir: "up" };
+    }
+
+    const top = nonDet[0];
+    switch (top.metric) {
+      case "survival_runway_days": {
+        const v = m.survival_runway_days >= 999 ? "999+" : m.survival_runway_days;
+        return { text: `Runway ↓ ${v} d`, dir: "down" };
+      }
+      case "real_cash_coverage":
+        return { text: `Coverage ↓ ${m.real_cash_coverage.toFixed(2)}×`, dir: "down" };
+      case "fx_mismatch_exposure":
+        return { text: `FX ↑ ${(m.fx_mismatch_exposure * 100).toFixed(0)}%`, dir: "down" };
+      case "revenue_concentration":
+        return { text: `Conc. ↑ ${(m.revenue_concentration * 100).toFixed(0)}%`, dir: "down" };
+      default:
+        return null;
     }
   }
 
-  function renderKPIs(data) {
-    const approvalRate  = data.overall_approval_rate ?? 0;
-    const totalMerchants = data.total_merchants_scored ?? 0;
-    const dist = data.score_distribution ?? {};
-    const approved = dist["61-80"] + dist["81-100"];
-    const reviewed = dist["41-60"];
-    const declined = dist["0-20"] + dist["21-40"];
+  // ── Load ───────────────────────────────────────────────────────────────────
+  async function loadPortfolio() {
+    document.getElementById("status-dot").style.background = "#facc15";
+    document.getElementById("loading-state").style.display = "";
+    document.getElementById("main-content").style.display = "none";
 
-    const kpiEl = document.getElementById("kpi-row");
-    kpiEl.innerHTML = `
-      <div class="kpi-card">
-        <div class="kpi-label">Merchants Scored</div>
-        <div class="kpi-value accent">${totalMerchants}</div>
-        <div class="kpi-sub"><span class="kpi-pill accent">all time</span></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Approval Rate</div>
-        <div class="kpi-value ${approvalRate >= 60 ? 'green' : approvalRate >= 40 ? 'yellow' : 'red'}">${approvalRate}%</div>
-        <div class="kpi-sub"><span class="kpi-pill ${approvalRate >= 60 ? 'green' : approvalRate >= 40 ? 'yellow' : 'red'}">${approved} approved</span></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Under Review</div>
-        <div class="kpi-value yellow">${reviewed}</div>
-        <div class="kpi-sub"><span class="kpi-pill yellow">manual check</span></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Declined</div>
-        <div class="kpi-value red">${declined}</div>
-        <div class="kpi-sub"><span class="kpi-pill red">below threshold</span></div>
+    try {
+      const res = await fetch("/dashboard/portfolio");
+      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      _portfolio = await res.json();
+      render(_portfolio);
+      document.getElementById("status-dot").style.background = "#4ade80";
+    } catch (e) {
+      document.getElementById("loading-state").innerHTML =
+        `<div class="error-msg">Failed to load portfolio: ${e.message}</div>`;
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function render(p) {
+    renderModelMeta(p);
+    renderKPIs(p);
+    renderPortfolioSummary(p);
+    renderOpsPanel(p);
+    renderAlerts(p);
+    populateSectorFilter(p.merchants);
+    _filtered = [...p.merchants];
+    applyFilters();
+    document.getElementById("loading-state").style.display = "none";
+    document.getElementById("main-content").style.display = "";
+  }
+
+  function renderModelMeta(p) {
+    const m = p.model || {};
+    document.getElementById("model-meta-line").textContent =
+      `Model: ${m.name || "—"} · Data as of ${p.last_refreshed || "—"} · Refresh mode: ${m.refresh_mode || "batch"}`;
+  }
+
+  function renderPortfolioSummary(p) {
+    const el  = document.getElementById("portfolio-summary");
+    const imp = p.improved_count_30d     || 0;
+    const det = p.deteriorated_count_30d || 0;
+    const nhr = p.new_high_risk_30d      || 0;
+    el.style.display = "";
+    el.innerHTML = `
+      <div class="summary-panel">
+        <span class="summary-label">In the last 30 days:</span>
+        <span class="summary-stat pos">${imp} merchant${imp !== 1 ? "s" : ""} improved</span>
+        <span class="summary-sep">·</span>
+        <span class="summary-stat ${det > 0 ? "neg" : "neu"}">${det} deteriorated</span>
+        <span class="summary-sep">·</span>
+        <span class="summary-stat ${nhr > 0 ? "neg" : "neu"}">${nhr} entered high risk for the first time</span>
       </div>
     `;
   }
 
-  function renderCharts(data) {
-    document.getElementById("charts-grid").style.display = "";
+  function renderOpsPanel(p) {
+    const el  = document.getElementById("ops-summary");
+    const unr = p.unreviewed_count       || 0;
+    const ovr = p.overdue_review_count   || 0;
+    const esc = p.escalated_count        || 0;
+    const opn = p.open_case_count        || 0;
+    const dbs = p.deteriorating_by_sector || {};
+    const topDetSector = Object.keys(dbs)[0];
 
-    const gridColor  = "rgba(40,37,29,0.06)";
-    const tickColor  = "#a9a8a3";
+    let detPart = "";
+    if (topDetSector) {
+      detPart = `<span class="summary-sep">·</span>
+        <span class="summary-label">Deteriorating sector:</span>
+        <span class="summary-stat neg">${capitalize(topDetSector)} (avg ${dbs[topDetSector].toFixed(2)})</span>`;
+    }
 
-    // ── 1. Score Distribution ──────────────────────────────────
-    const distLabels = Object.keys(data.score_distribution);
-    const distValues = Object.values(data.score_distribution);
-    const distColors = ["#b92b2b", "#e07b00", "#9a5a00", "#2d7a3a", "#01696f"];
-
-    if (distChart) distChart.destroy();
-    distChart = new Chart(document.getElementById("chart-dist"), {
-      type: "bar",
-      data: {
-        labels: distLabels,
-        datasets: [{
-          label: "Merchants",
-          data: distValues,
-          backgroundColor: distColors,
-          borderRadius: 6,
-          borderSkipped: false,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ` ${ctx.parsed.y} merchant${ctx.parsed.y !== 1 ? "s" : ""}`,
-            },
-          },
-        },
-        scales: {
-          x: { grid: { color: gridColor }, ticks: { color: tickColor } },
-          y: {
-            grid: { color: gridColor },
-            ticks: { color: tickColor, stepSize: 1, precision: 0 },
-            beginAtZero: true,
-          },
-        },
-      },
-    });
-
-    // ── 2. Approval Rate Weekly ────────────────────────────────
-    const wLabels = data.approval_rate_weekly.labels;
-    const wData   = data.approval_rate_weekly.data;
-
-    if (weeklyChart) weeklyChart.destroy();
-    weeklyChart = new Chart(document.getElementById("chart-weekly"), {
-      type: "line",
-      data: {
-        labels: wLabels,
-        datasets: [{
-          label: "Approval Rate %",
-          data: wData,
-          borderColor: "#01696f",
-          backgroundColor: "rgba(1,105,111,0.10)",
-          fill: true,
-          tension: 0.35,
-          pointBackgroundColor: "#01696f",
-          pointRadius: 4,
-          pointHoverRadius: 6,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: { label: ctx => ` ${ctx.parsed.y}%` },
-          },
-        },
-        scales: {
-          x: { grid: { color: gridColor }, ticks: { color: tickColor } },
-          y: {
-            grid: { color: gridColor },
-            ticks: { color: tickColor, callback: v => v + "%" },
-            min: 0, max: 100,
-          },
-        },
-      },
-    });
-
-    // ── 3. Avg Credit Limit by Bank (horizontal) ──────────────
-    const bankLabels = Object.keys(data.avg_limit_by_bank);
-    const bankValues = Object.values(data.avg_limit_by_bank);
-    const bankColors = bankValues.map(v =>
-      v >= 300000 ? "#01696f" : v >= 150000 ? "#9a5a00" : "#b92b2b"
-    );
-
-    if (bankChart) bankChart.destroy();
-    bankChart = new Chart(document.getElementById("chart-bank"), {
-      type: "bar",
-      data: {
-        labels: bankLabels,
-        datasets: [{
-          label: "Avg Limit (COP)",
-          data: bankValues,
-          backgroundColor: bankColors,
-          borderRadius: 6,
-          borderSkipped: false,
-        }],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: ctx => ` COP ${ctx.parsed.x.toLocaleString("es-CO")}`,
-            },
-          },
-        },
-        scales: {
-          x: {
-            grid: { color: gridColor },
-            ticks: {
-              color: tickColor,
-              callback: v => "COP " + (v / 1000).toFixed(0) + "k",
-            },
-            beginAtZero: true,
-          },
-          y: { grid: { display: false }, ticks: { color: tickColor } },
-        },
-      },
-    });
+    el.style.display = "";
+    el.innerHTML = `
+      <div class="summary-panel">
+        <span class="summary-label">Review queue:</span>
+        <span class="summary-stat ${unr > 0 ? "neg" : "neu"}">${unr} unreviewed</span>
+        <span class="summary-sep">·</span>
+        <span class="summary-stat ${ovr > 0 ? "neg" : "neu"}">${ovr} overdue</span>
+        <span class="summary-sep">·</span>
+        <span class="summary-stat ${esc > 0 ? "neg" : "neu"}">${esc} escalated</span>
+        <span class="summary-sep">·</span>
+        <span class="summary-stat ${opn > 0 ? "neg" : "neu"}">${opn} open cases</span>
+        ${detPart}
+      </div>
+    `;
   }
 
-  loadStats();
+  function renderKPIs(p) {
+    const ac = p.action_counts || {};
+    const kpiEl = document.getElementById("kpi-row");
+    const items = [
+      { key: "reduce_exposure", label: "Reduce Exposure", color: "var(--c-red)" },
+      { key: "review_now",      label: "Review Now",      color: "var(--c-orange)" },
+      { key: "monitor",         label: "Monitor",         color: "var(--c-amber)" },
+      { key: "healthy",         label: "Healthy",         color: "var(--c-green)" },
+      { key: "opportunity",     label: "Opportunity",     color: "var(--c-teal)" },
+    ];
+    kpiEl.innerHTML = items.map(it => `
+      <div class="kpi-card" onclick="filterByAction('${it.key}')" id="kpi-${it.key}">
+        <div class="kpi-label">${it.label}</div>
+        <div class="kpi-value" style="color:${it.color}">${ac[it.key] || 0}</div>
+        <div class="kpi-sub">${p.merchant_count} total merchants</div>
+      </div>
+    `).join("");
+  }
+
+  function renderAlerts(p) {
+    const panel = document.getElementById("alerts-panel");
+    const urgent = [];
+    for (const m of p.merchants) {
+      for (const a of (m.alerts || [])) {
+        if (a.severity === "critical") {
+          urgent.push({ name: m.name, ...a });
+        }
+      }
+    }
+    if (urgent.length === 0) { panel.style.display = "none"; return; }
+
+    panel.style.display = "";
+    panel.innerHTML = `
+      <div class="alerts-panel">
+        <div class="alerts-panel-title">⚠ ${urgent.length} critical alert${urgent.length > 1 ? "s" : ""} require attention</div>
+        ${urgent.map(a => `
+          <div class="alert-item">
+            <span class="alert-merchant">${a.name}</span>
+            <span class="alert-sev ${a.severity}">${a.severity}</span>
+            <span class="alert-msg">${a.message}</span>
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function populateSectorFilter(merchants) {
+    const sectors = [...new Set(merchants.map(m => m.sector))].sort();
+    const sel = document.getElementById("filter-sector");
+    sel.innerHTML = `<option value="">All sectors</option>` +
+      sectors.map(s => `<option value="${s}">${capitalize(s)}</option>`).join("");
+  }
+
+  // ── Filters & sort ─────────────────────────────────────────────────────────
+  function filterByAction(action) {
+    const sel = document.getElementById("filter-action");
+    sel.value = sel.value === action ? "" : action;
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const action = document.getElementById("filter-action").value;
+    const sector = document.getElementById("filter-sector").value;
+
+    // Update KPI card highlights
+    document.querySelectorAll(".kpi-card").forEach(c => c.classList.remove("active"));
+    if (action) {
+      const el = document.getElementById(`kpi-${action}`);
+      if (el) el.classList.add("active");
+    }
+
+    _filtered = (_portfolio?.merchants || []).filter(m => {
+      if (action && m.action !== action) return false;
+      if (sector && m.sector !== sector) return false;
+      return true;
+    });
+
+    sortAndRender();
+    document.getElementById("filter-count").textContent =
+      `${_filtered.length} merchant${_filtered.length !== 1 ? "s" : ""}`;
+  }
+
+  let _lastSortCol = null;
+  let _lastSortAsc = true;
+
+  function sortBy(col) {
+    if (_lastSortCol === col) {
+      _lastSortAsc = !_lastSortAsc;
+    } else {
+      _lastSortCol = col;
+      _lastSortAsc = col === "deterioration_index" ? false : true;
+    }
+    _sortCol = col;
+    _sortAsc = _lastSortAsc;
+    updateSortHeaders();
+    sortAndRender();
+  }
+
+  function updateSortHeaders() {
+    document.querySelectorAll("thead th").forEach(th => {
+      th.classList.remove("sorted");
+      th.textContent = th.textContent.replace(" ↑", "").replace(" ↓", "");
+    });
+    if (_lastSortCol) {
+      const th = document.querySelector(`[data-col="${_lastSortCol}"]`);
+      if (th) {
+        th.classList.add("sorted");
+        th.textContent += _lastSortAsc ? " ↑" : " ↓";
+      }
+    }
+  }
+
+  function sortAndRender() {
+    const sorted = [..._filtered];
+    if (_sortCol === "__urgency__" || !_lastSortCol) {
+      sorted.sort((a, b) => ACTION_ORDER[a.action] - ACTION_ORDER[b.action]);
+    } else {
+      const col = _lastSortCol;
+      sorted.sort((a, b) => {
+        const av = a[col] ?? 0, bv = b[col] ?? 0;
+        return _lastSortAsc ? av - bv : bv - av;
+      });
+    }
+    renderTable(sorted);
+  }
+
+  function renderTable(merchants) {
+    const tbody = document.getElementById("watchlist-body");
+    if (!merchants.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">No merchants match filters</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = merchants.map(m => {
+      const risk  = RISK_LEVEL[m.action] || { text: m.action, color: "amber" };
+      const label = ACTION_LABEL_SHORT[m.action] || m.action;
+
+      const lights = m.metric_lights || {};
+      const runwayLight = lights.survival_runway || "green";
+      const covLight    = lights.real_cash_coverage || "green";
+      const fxLight     = lights.fx_mismatch || "green";
+
+      const det = m.deterioration_index ?? 0;
+      let detClass = "det-flat", detArrow = "→";
+      if (det > 0.05) { detClass = "det-up"; detArrow = "↑"; }
+      else if (det < -0.05) { detClass = "det-down"; detArrow = "↓"; }
+      const detSign = det > 0 ? "+" : "";
+
+      const runway = m.survival_runway_days;
+      const runwayStr = runway >= 999 ? "999+ d" : `${runway} d`;
+      const coverage = m.real_cash_coverage;
+      const fxPct = (m.fx_mismatch_exposure * 100).toFixed(0) + "%";
+
+      const change = topChange(m);
+      const changeHtml = change
+        ? `<span class="change-${change.dir}">${change.text}</span>`
+        : `<span class="change-flat">—</span>`;
+
+      const reviewStatus = m.review_status || "unreviewed";
+      const overdueDays  = m.review_overdue_days || 0;
+      const nextReview   = m.next_review_date || "";
+      const reviewLabel  = reviewStatus === "in_review" ? "in review" : reviewStatus;
+      let reviewSubHtml  = "";
+      if (overdueDays > 0) {
+        reviewSubHtml = `<span class="summary-sep">·</span><span class="review-overdue">${overdueDays}d overdue</span>`;
+      } else if (nextReview) {
+        const d = new Date(nextReview + "T00:00:00");
+        const fmt = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        reviewSubHtml = `<span class="summary-sep">·</span><span>due ${fmt}</span>`;
+      }
+
+      const escBadge = m.needs_escalation
+        ? `<span class="escalation-flag">ESCALATED</span>`
+        : "";
+
+      return `
+        <tr onclick="window.location='/merchant/${m.merchant_id}'">
+          <td>
+            <div class="merchant-name">${m.name}${escBadge}</div>
+            <div class="merchant-bank">${m.bank}</div>
+          </td>
+          <td><span class="sector-tag">${m.sector}</span></td>
+          <td>
+            <div class="risk-label">
+              <span class="risk-dot risk-dot-${risk.color}"></span>${risk.text}
+            </div>
+            <span class="rec-pill rec-${risk.color}">${label}</span>
+            <div class="review-indicator">
+              <span class="review-dot review-dot-${reviewStatus}"></span>
+              <span>${reviewLabel}</span>
+              ${reviewSubHtml}
+            </div>
+          </td>
+          <td class="num">
+            <span class="metric-light light-${runwayLight}"></span>${runwayStr}
+          </td>
+          <td class="num hide-sm">
+            <span class="metric-light light-${covLight}"></span>${coverage.toFixed(2)}×
+          </td>
+          <td class="num hide-sm">
+            <span class="metric-light light-${fxLight}"></span>${fxPct}
+          </td>
+          <td class="num">
+            <span class="det-arrow ${detClass}">${detArrow}</span>
+            <span class="${detClass}">${detSign}${det.toFixed(2)}</span>
+          </td>
+          <td class="hide-sm">${changeHtml}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  async function logout() {
+    await fetch("/lender/logout", { method: "POST" });
+    window.location = "/lender/login-request";
+  }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  loadPortfolio();
 </script>
 </body>
 </html>

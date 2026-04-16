@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riél — Merchant Detail</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f7f6f2;
+      --surface:     #ffffff;
+      --border:      rgba(40,37,29,0.10);
+      --shadow:      0 1px 3px rgba(26,25,22,0.07);
+      --text:        #1a1916;
+      --muted:       #6b6760;
+      --faint:       #a9a8a3;
+      --accent:      #01696f;
+      --accent-h:    #0c4e54;
+      --accent-bg:   #e0eeee;
+      --c-teal:      #01696f;  --c-teal-bg:   #e0eeee;
+      --c-green:     #2d7a3a;  --c-green-bg:  #eaf5ec;
+      --c-amber:     #9a5a00;  --c-amber-bg:  #fef3e2;
+      --c-orange:    #b94a00;  --c-orange-bg: #fff0e8;
+      --c-red:       #b92b2b;  --c-red-bg:    #fdeaea;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 40px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo-group { display: flex; flex-direction: column; gap: 3px; }
+    .logo-name  {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+    .logo-line  {
+      height: 2px;
+      background: linear-gradient(to right, var(--accent), #06B6D4, var(--accent));
+      border-radius: 2px;
+    }
+    .header-sub {
+      font-size: 0.68rem;
+      color: var(--faint);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.78rem;
+      padding: 7px 13px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .header-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Layout ──────────────────────────────────────────────── */
+    main { padding: 28px 40px 64px; max-width: 960px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 14px;
+    }
+
+    /* ── Merchant banner ─────────────────────────────────────── */
+    .banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .banner-left { flex: 1; }
+
+    .merchant-name {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      margin-bottom: 6px;
+    }
+
+    .banner-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .meta-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 500;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 9px;
+      color: var(--muted);
+    }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+    .state-badge .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+    }
+
+    .badge-teal   { background: var(--c-teal-bg);   color: var(--c-teal); }
+    .badge-teal .dot   { background: var(--c-teal); }
+    .badge-green  { background: var(--c-green-bg);  color: var(--c-green); }
+    .badge-green .dot  { background: var(--c-green); }
+    .badge-amber  { background: var(--c-amber-bg);  color: var(--c-amber); }
+    .badge-amber .dot  { background: var(--c-amber); }
+    .badge-orange { background: var(--c-orange-bg); color: var(--c-orange); }
+    .badge-orange .dot { background: var(--c-orange); }
+    .badge-red    { background: var(--c-red-bg);    color: var(--c-red); }
+    .badge-red .dot    { background: var(--c-red); }
+
+    .action-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .refresh-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--faint);
+      font-family: inherit;
+      font-size: 0.78rem;
+      padding: 8px 14px;
+      cursor: not-allowed;
+      opacity: 0.55;
+      white-space: nowrap;
+    }
+    .refresh-hint {
+      font-size: 0.66rem;
+      color: var(--faint);
+      text-align: right;
+      max-width: 180px;
+      line-height: 1.4;
+    }
+
+    /* ── Narrative ───────────────────────────────────────────── */
+    .narrative {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+    .narrative strong { color: var(--text); }
+
+    /* ── Metric cards ────────────────────────────────────────── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .metric-light-dot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .light-green { background: var(--c-green); }
+    .light-amber { background: var(--c-amber); }
+    .light-red   { background: var(--c-red); }
+
+    .metric-caption {
+      font-size: 0.69rem;
+      color: var(--muted);
+    }
+
+    .metric-card.border-green { border-top: 3px solid var(--c-green); }
+    .metric-card.border-amber { border-top: 3px solid var(--c-amber); }
+    .metric-card.border-red   { border-top: 3px solid var(--c-red); }
+
+    /* ── Trend table ─────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--faint);
+      padding: 10px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th.num { text-align: right; }
+    tbody td {
+      padding: 12px 16px;
+      font-size: 0.83rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .trend-window {
+      font-weight: 600;
+      font-size: 0.78rem;
+    }
+
+    /* ── Alerts ──────────────────────────────────────────────── */
+    .alert-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.83rem;
+    }
+    .alert-item:last-child { border-bottom: none; }
+
+    .alert-sev {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .alert-sev.critical { background: var(--c-red-bg); color: var(--c-red); }
+    .alert-sev.warning  { background: var(--c-amber-bg); color: var(--c-amber); }
+
+    .alert-msg { color: var(--muted); }
+
+    .no-alerts {
+      padding: 20px;
+      text-align: center;
+      font-size: 0.83rem;
+      color: var(--c-green);
+    }
+
+    /* ── Scenario panel ──────────────────────────────────────── */
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    .scenario-row {
+      display: contents;
+    }
+
+    .scenario-metric {
+      padding: 13px 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+    .scenario-detail {
+      padding: 13px 20px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .scenario-metric:last-of-type, .scenario-detail:last-of-type { border-bottom: none; }
+
+    .gap-good    { color: var(--c-green); font-size: 0.75rem; }
+    .gap-warn    { color: var(--c-amber); font-size: 0.75rem; }
+    .gap-danger  { color: var(--c-red);   font-size: 0.75rem; }
+
+    /* ── Model metadata line (banner) ───────────────────────────── */
+    .model-meta-line {
+      font-size: 0.67rem;
+      color: var(--faint);
+      margin-top: 10px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Risk history timeline ───────────────────────────────────── */
+    .timeline { padding: 0 20px; }
+    .timeline-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child { border-bottom: none; }
+    .timeline-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .timeline-body { flex: 1; }
+    .timeline-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 3px;
+    }
+    .timeline-action { font-weight: 600; font-size: 0.83rem; }
+    .timeline-date   { font-size: 0.72rem; color: var(--faint); white-space: nowrap; }
+    .timeline-reason { font-size: 0.80rem; color: var(--muted); }
+    .timeline-note   { font-size: 0.67rem; color: var(--faint); margin-top: 2px; font-style: italic; }
+    .timeline-item.override-event .timeline-action { font-style: italic; }
+
+    /* ── Review card ─────────────────────────────────────────── */
+    .review-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .review-card-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.83rem;
+    }
+    .review-card-row:last-child { margin-bottom: 0; }
+    .review-card-label { color: var(--muted); min-width: 120px; font-size: 0.78rem; }
+    .review-status-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .review-status-unreviewed { background: #eee;   color: #666; }
+    .review-status-in_review  { background: #fff4d6; color: #8a5f00; }
+    .review-status-reviewed   { background: #e4f4ec; color: #1a6b3c; }
+    .review-overdue-flag { color: var(--c-red); font-size: 0.74rem; font-weight: 600; margin-left: 6px; }
+
+    /* ── Escalation card ─────────────────────────────────────── */
+    .escalation-card {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .escalation-icon   { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .escalation-title  { font-size: 0.82rem; font-weight: 700; color: #7f1d1d; }
+    .escalation-reason { font-size: 0.78rem; color: #991b1b; margin-top: 3px; }
+
+    /* ── Case events in timeline ─────────────────────────────── */
+    .timeline-item.case-event .timeline-dot   { background: #9ca3af; }
+    .timeline-item.case-event .timeline-action { color: #374151; font-style: normal; font-weight: 600; }
+    .timeline-item.case-event .timeline-analyst { font-size: 0.67rem; color: var(--faint); margin-top: 2px; }
+
+    /* ── Override section ────────────────────────────────────── */
+    .override-card {
+      background: #fffbf0;
+      border: 1px solid #e8d89a;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .override-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 0.83rem;
+    }
+    .override-row:last-child { margin-bottom: 0; }
+    .override-label  { color: var(--muted); min-width: 160px; font-size: 0.78rem; }
+    .override-badge  {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      background: #fde9b0;
+      color: #7a5200;
+    }
+    .override-reason { font-size: 0.80rem; color: var(--muted); font-style: italic; }
+    .override-meta   { font-size: 0.72rem; color: var(--faint); }
+
+    /* ── Loading / error ─────────────────────────────────────── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      gap: 10px;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-msg { color: var(--c-red); font-size: 0.85rem; text-align: center; padding: 60px; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      header { padding: 16px 20px; }
+      main   { padding: 20px 16px 48px; }
+      .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+      .banner { flex-direction: column; }
+    }
+    @media (max-width: 600px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .scenario-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-group">
+    <div class="logo-name">Riél</div>
+    <div class="logo-line"></div>
+    <div class="header-sub">Merchant Detail · Argentina</div>
+  </div>
+  <div class="header-right">
+    <a class="header-btn" href="/dashboard">← Portfolio</a>
+  </div>
+</header>
+
+<main>
+  <div id="loading-state" class="loading">
+    <div class="spinner"></div> Loading merchant data…
+  </div>
+  <div id="main-content" style="display:none;"></div>
+</main>
+
+<script>
+  const BADGE_CLASS = {
+    "teal":   "badge-teal",
+    "green":  "badge-green",
+    "amber":  "badge-amber",
+    "orange": "badge-orange",
+    "red":    "badge-red",
+  };
+
+  const METRIC_CAPTIONS = {
+    survival_runway_days:   "days of cash at current burn",
+    real_cash_coverage:     "inflows vs contractual outflows",
+    fx_mismatch_exposure:   "of outflows in foreign currency",
+    revenue_concentration:  "of revenue from top 3 clients",
+    deterioration_index:    "30d vs prior 30d trend",
+  };
+
+  const METRIC_FORMAT = {
+    survival_runway_days:   v => `${v >= 999 ? "999+" : v} d`,
+    real_cash_coverage:     v => `${v.toFixed(2)}×`,
+    fx_mismatch_exposure:   v => `${(v * 100).toFixed(0)}%`,
+    revenue_concentration:  v => `${(v * 100).toFixed(0)}%`,
+    deterioration_index:    v => (v >= 0 ? "+" : "") + v.toFixed(2),
+  };
+
+  const METRIC_LABELS = {
+    survival_runway_days:   "Survival Runway",
+    real_cash_coverage:     "Cash Coverage",
+    fx_mismatch_exposure:   "FX Mismatch",
+    revenue_concentration:  "Revenue Conc.",
+    deterioration_index:    "Deterioration",
+  };
+
+  // Thresholds for scenario panel (must match argentina_config.py)
+  const THRESHOLDS = {
+    survival_runway_days:  { green: 60,   amber: 30 },
+    real_cash_coverage:    { green: 1.5,  amber: 1.0 },
+    fx_mismatch_exposure:  { green: 0.10, amber: 0.30 },
+    revenue_concentration: { green: 0.50, amber: 0.70 },
+    deterioration_index:   { green: 0.10, amber: -0.10 },
+  };
+
+  // ── Load ──────────────────────────────────────────────────────────────────
+  function getLinkId() {
+    const parts = window.location.pathname.split("/");
+    return parts[parts.length - 1];
+  }
+
+  async function loadMerchant() {
+    const linkId = getLinkId();
+    try {
+      const res = await fetch(`/dashboard/merchant/${linkId}`);
+      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      render(data);
+    } catch (e) {
+      document.getElementById("loading-state").innerHTML =
+        `<div class="error-msg">Failed to load merchant: ${e.message}</div>`;
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function render(d) {
+    document.title = `Riél — ${d.name}`;
+    const el = document.getElementById("main-content");
+    el.innerHTML =
+      renderBanner(d) +
+      renderReviewCard(d) +
+      renderEscalation(d) +
+      renderOverride(d) +
+      renderNarrative(d) +
+      renderMetricCards(d) +
+      renderTrendTable(d) +
+      renderAlerts(d) +
+      renderRiskHistory(d) +
+      renderScenario(d);
+    document.getElementById("loading-state").style.display = "none";
+    el.style.display = "";
+  }
+
+  function renderBanner(d) {
+    const bc = BADGE_CLASS[d.status_color] || "badge-amber";
+    const actionLabels = {
+      "opportunity":     "Opportunity — consider limit increase",
+      "healthy":         "Healthy — no action needed",
+      "monitor":         "Monitor — watch trend",
+      "review_now":      "Review Now — schedule assessment",
+      "reduce_exposure": "Reduce Exposure — act immediately",
+    };
+    const actionShort = {
+      "opportunity":     "Opportunity",
+      "healthy":         "Healthy",
+      "monitor":         "Monitor",
+      "review_now":      "Review Now",
+      "reduce_exposure": "Reduce Exposure",
+    };
+    return `
+      <div class="banner">
+        <div class="banner-left">
+          <div class="merchant-name">${d.name}</div>
+          <div class="banner-meta">
+            <span class="meta-tag">${capitalize(d.sector)}</span>
+            <span class="meta-tag">${d.bank}</span>
+            <span class="meta-tag">Updated ${d.last_updated}</span>
+          </div>
+          <span class="state-badge ${bc}">
+            <span class="dot"></span>${actionShort[d.action] || d.action}
+          </span>
+          <div class="action-label">${actionLabels[d.action] || d.action}</div>
+          <div class="model-meta-line">
+            Model: ${(d.model || {}).name || "—"} · Based on ${((d.model || {}).lookback_windows || [90]).join("/")}d windows · Last refresh ${d.last_refreshed || d.last_updated}
+          </div>
+        </div>
+        <div class="refresh-block">
+          <button class="refresh-btn" disabled>Refresh Risk</button>
+          <div class="refresh-hint">Agentic refresh coming soon — current risk view is based on the latest batch run</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderReviewCard(d) {
+    const status    = d.review_status || "unreviewed";
+    const owner     = d.owner || null;
+    const note      = d.analyst_note || null;
+    const nextDate  = d.next_review_date || null;
+    const overdue   = d.review_overdue_days || 0;
+
+    const statusLabel = status === "in_review" ? "In review" : status.charAt(0).toUpperCase() + status.slice(1);
+    const statusClass = `review-status-${status}`;
+
+    let nextHtml = "—";
+    if (nextDate) {
+      const d2 = new Date(nextDate + "T00:00:00");
+      const fmt = d2.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+      nextHtml = fmt;
+      if (overdue > 0) {
+        nextHtml += `<span class="review-overdue-flag">${overdue}d overdue</span>`;
+      }
+    }
+
+    return `
+      <div class="section" style="padding-top:0;">
+        <div class="section-title">Review Status</div>
+        <div class="review-card">
+          <div class="review-card-row">
+            <span class="review-card-label">Status</span>
+            <span class="review-status-badge ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="review-card-row">
+            <span class="review-card-label">Owner</span>
+            <span>${owner || "—"}</span>
+          </div>
+          <div class="review-card-row">
+            <span class="review-card-label">Next review</span>
+            <span>${nextHtml}</span>
+          </div>
+          ${note ? `<div class="review-card-row">
+            <span class="review-card-label">Analyst note</span>
+            <span style="font-style:italic;color:var(--muted)">${note}</span>
+          </div>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEscalation(d) {
+    if (!d.needs_escalation) return "";
+    return `
+      <div class="section" style="padding-top:0;">
+        <div class="escalation-card">
+          <div class="escalation-icon">⚑</div>
+          <div>
+            <div class="escalation-title">Escalated for immediate attention</div>
+            <div class="escalation-reason">${d.escalation_reason || ""}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderOverride(d) {
+    if (!d.override) return "";
+    const ov = d.override;
+    const orig    = ov.original_recommendation || d.action;
+    const curr    = ov.current_recommendation  || d.action;
+    const reason  = ov.override_reason   || "";
+    const by      = ov.override_by       || "unknown";
+    const ts      = ov.override_timestamp || "";
+    const tsLabel = ts ? ts.replace("T", " ").slice(0, 16) : "—";
+
+    const ACTION_SHORT = {
+      "opportunity":     "Opportunity",
+      "healthy":         "Healthy",
+      "monitor":         "Monitor",
+      "review_now":      "Review Now",
+      "reduce_exposure": "Reduce Exposure",
+    };
+
+    return `
+      <div class="section" style="padding-top:0;">
+        <div class="section-title">Analyst Override</div>
+        <div class="override-card">
+          <div class="override-row">
+            <span class="override-label">Model recommendation</span>
+            <span>${ACTION_SHORT[orig] || orig}</span>
+          </div>
+          <div class="override-row">
+            <span class="override-label">Analyst recommendation</span>
+            <span class="override-badge">${ACTION_SHORT[curr] || curr}</span>
+          </div>
+          ${reason ? `<div class="override-row">
+            <span class="override-label">Reason</span>
+            <span class="override-reason">${reason}</span>
+          </div>` : ""}
+          <div class="override-row">
+            <span class="override-label">Overridden by</span>
+            <span class="override-meta">${by} · ${tsLabel}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderNarrative(d) {
+    const det     = d.deterioration_index ?? 0;
+    const drivers = d.top_risk_drivers || [];
+    const alerts  = d.alerts || [];
+
+    const RISK_LEVEL_TEXT = {
+      reduce_exposure: "high risk",
+      review_now:      "elevated risk",
+      monitor:         "moderate risk",
+      healthy:         "low risk",
+      opportunity:     "a strong position",
+    };
+    const ACTION_TEXT = {
+      opportunity:     "consider a limit increase",
+      healthy:         "no immediate action required",
+      monitor:         "monitor closely over the next 30 days",
+      review_now:      "schedule a credit assessment",
+      reduce_exposure: "reduce exposure immediately",
+    };
+
+    const sentences = [];
+
+    // 1. Risk state + recommendation
+    sentences.push(
+      `This merchant is rated <strong>${RISK_LEVEL_TEXT[d.action] || d.action}</strong>` +
+      ` — ${ACTION_TEXT[d.action] || d.action}.`
+    );
+
+    // 2. Revenue trend from deterioration index
+    const detPct = Math.abs(Math.round(det * 100));
+    if      (det >  0.20) sentences.push(`Revenue is <strong>up ${detPct}%</strong> vs the prior 30 days, indicating strong growth.`);
+    else if (det >  0.05) sentences.push(`Revenue is <strong>up ${detPct}%</strong> vs the prior 30 days.`);
+    else if (det >= -0.05) sentences.push(`Revenue is stable vs the prior 30 days.`);
+    else if (det >= -0.20) sentences.push(`Revenue has <strong>softened by ${detPct}%</strong> vs the prior 30 days.`);
+    else                  sentences.push(`Revenue has <strong>declined ${detPct}%</strong> vs the prior 30 days — a significant deterioration.`);
+
+    // 3. Top 1–2 non-deterioration risk drivers
+    const nonDetDrivers = drivers.filter(dr => dr.metric !== "deterioration_index").slice(0, 2);
+    const mentionedMetrics = new Set(nonDetDrivers.map(dr => dr.metric));
+    for (const dr of nonDetDrivers) {
+      sentences.push(dr.description + ".");
+    }
+
+    // 4. Critical threshold crossings not already covered by a driver description
+    const ALERT_METRIC = {
+      runway_critical:       "survival_runway_days",
+      coverage_insufficient: "real_cash_coverage",
+      deterioration_severe:  "deterioration_index",
+    };
+    for (const a of alerts.filter(a => a.severity === "critical")) {
+      const metric = ALERT_METRIC[a.type];
+      if (metric && !mentionedMetrics.has(metric) && metric !== "deterioration_index") {
+        sentences.push(`<strong>Threshold crossed:</strong> ${a.message}`);
+        mentionedMetrics.add(metric);
+      }
+    }
+
+    return `<div class="narrative">${sentences.join(" ")}</div>`;
+  }
+
+  function renderMetricCards(d) {
+    const lights = d.metric_lights || {};
+    const lightKeys = {
+      survival_runway_days:   "survival_runway",
+      real_cash_coverage:     "real_cash_coverage",
+      fx_mismatch_exposure:   "fx_mismatch",
+      revenue_concentration:  "revenue_concentration",
+      deterioration_index:    "deterioration",
+    };
+
+    const cards = Object.keys(METRIC_LABELS).map(key => {
+      const lightKey = lightKeys[key];
+      const light = lights[lightKey] || "green";
+      const value = d[key] ?? 0;
+      const formatted = METRIC_FORMAT[key](value);
+      const caption = METRIC_CAPTIONS[key];
+      return `
+        <div class="metric-card border-${light}">
+          <div class="metric-label">${METRIC_LABELS[key]}</div>
+          <div class="metric-value">
+            <span class="metric-light-dot light-${light}"></span>${formatted}
+          </div>
+          <div class="metric-caption">${caption}</div>
+        </div>
+      `;
+    });
+
+    return `<div class="metrics-grid">${cards.join("")}</div>`;
+  }
+
+  function renderTrendTable(d) {
+    const windows = d.trend_windows || {};
+    const keys = ["survival_runway_days", "real_cash_coverage", "fx_mismatch_exposure",
+                  "revenue_concentration", "deterioration_index"];
+
+    const rows = Object.entries({ "Last 30d": "w30d", "Last 60d": "w60d", "Last 90d": "w90d" })
+      .map(([label, wkey]) => {
+        const w = windows[wkey] || {};
+        const cells = keys.map(k => {
+          const v = w[k] ?? null;
+          const f = v !== null ? METRIC_FORMAT[k](v) : "—";
+          return `<td class="num">${f}</td>`;
+        }).join("");
+        return `<tr><td class="trend-window">${label}</td>${cells}</tr>`;
+      }).join("");
+
+    const headers = keys.map(k => `<th class="num">${METRIC_LABELS[k]}</th>`).join("");
+
+    return `
+      <div class="section-title">30 / 60 / 90-Day Trend</div>
+      <div class="card" style="margin-bottom:24px;">
+        <table>
+          <thead><tr><th>Window</th>${headers}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderAlerts(d) {
+    const alerts = d.alerts || [];
+    let inner;
+    if (alerts.length === 0) {
+      inner = `<div class="no-alerts">✓ No active alerts for this merchant</div>`;
+    } else {
+      inner = alerts.map(a => `
+        <div class="alert-item">
+          <span class="alert-sev ${a.severity}">${a.severity}</span>
+          <span class="alert-msg">${a.message}</span>
+        </div>
+      `).join("");
+    }
+
+    return `
+      <div class="section-title">Active Alerts</div>
+      <div class="card" style="margin-bottom:24px;">${inner}</div>
+    `;
+  }
+
+  // Return a domain-specific gap string for a given metric + light.
+  function scenarioGap(key, value, light) {
+    const thresh = THRESHOLDS[key];
+    const target = light === "red" ? thresh.amber : thresh.green;
+    const band   = light === "red" ? "amber" : "green";
+
+    switch (key) {
+      case "survival_runway_days": {
+        const need = Math.max(0, Math.ceil(target - value));
+        return need === 0
+          ? `At the ${band} threshold (${target} days)`
+          : `+${need} day${need !== 1 ? "s" : ""} of runway needed to reach ${band}`;
+      }
+      case "real_cash_coverage": {
+        const need = Math.max(0, +(target - value).toFixed(2));
+        return need === 0
+          ? `At the ${band} threshold (${target}×)`
+          : `+${need.toFixed(2)}× coverage needed to reach ${band}`;
+      }
+      case "fx_mismatch_exposure": {
+        const tPct = (target * 100).toFixed(0);
+        const vPct = (value * 100).toFixed(0);
+        return value <= target
+          ? `At or below the ${band} threshold (${tPct}%)`
+          : `FX mismatch must fall below ${tPct}% to reach ${band} (currently ${vPct}%)`;
+      }
+      case "revenue_concentration": {
+        const tPct = (target * 100).toFixed(0);
+        const vPct = (value * 100).toFixed(0);
+        return value <= target
+          ? `At or below the ${band} threshold (${tPct}%)`
+          : `Revenue concentration must fall below ${tPct}% to reach ${band} (currently ${vPct}%)`;
+      }
+      case "deterioration_index": {
+        const need = +(target - value).toFixed(2);
+        return need <= 0
+          ? `At or above the ${band} threshold`
+          : `Trend index must improve by +${need.toFixed(2)} to reach ${band}`;
+      }
+      default:
+        return `Needs adjustment to reach ${band}`;
+    }
+  }
+
+  function renderScenario(d) {
+    const lights = d.metric_lights || {};
+    const lightKeys = {
+      survival_runway_days:   "survival_runway",
+      real_cash_coverage:     "real_cash_coverage",
+      fx_mismatch_exposure:   "fx_mismatch",
+      revenue_concentration:  "revenue_concentration",
+      deterioration_index:    "deterioration",
+    };
+
+    const rows = Object.keys(METRIC_LABELS).map(key => {
+      const lightKey = lightKeys[key];
+      const light = lights[lightKey] || "green";
+      if (light === "green") return null;
+
+      const value    = d[key] ?? 0;
+      const gap      = scenarioGap(key, value, light);
+      const gapClass = light === "red" ? "gap-danger" : "gap-warn";
+
+      return `
+        <div class="scenario-metric">${METRIC_LABELS[key]} <span style="font-weight:400;font-size:0.8rem;">(${METRIC_FORMAT[key](value)})</span></div>
+        <div class="scenario-detail"><span class="${gapClass}">${gap}</span></div>
+      `;
+    }).filter(Boolean);
+
+    if (rows.length === 0) {
+      return `
+        <div class="section-title">Improvement Scenarios</div>
+        <div class="card" style="margin-bottom:24px;">
+          <div class="no-alerts" style="color:var(--c-green);">✓ All metrics are in the green range</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="section-title">Improvement Scenarios</div>
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-title">Distance to next threshold</div>
+        <div class="scenario-grid">${rows.join("")}</div>
+      </div>
+    `;
+  }
+
+  function renderRiskHistory(d) {
+    const history = d.risk_history || [];
+    if (history.length === 0) return "";
+
+    const ACTION_COLORS = {
+      reduce_exposure: "c-red",
+      review_now:      "c-orange",
+      monitor:         "c-amber",
+      healthy:         "c-green",
+      opportunity:     "c-teal",
+    };
+    const ACTION_SHORT = {
+      opportunity:     "Opportunity",
+      healthy:         "Healthy",
+      monitor:         "Monitor",
+      review_now:      "Review Now",
+      reduce_exposure: "Reduce Exposure",
+    };
+
+    const CASE_EVENT_LABELS = {
+      flag_raised:                 "Case Flagged",
+      analyst_reviewed:            "Analyst Reviewed",
+      recommendation_confirmed:    "Recommendation Confirmed",
+      no_action_taken:             "No Action Taken",
+      reduce_exposure_recommended: "Reduce Exposure Recommended",
+      topup_candidate_flagged:     "Top-Up Candidate Flagged",
+    };
+
+    const items = history.map(entry => {
+      const isOverride  = entry.event_type === "override";
+      const isCaseEvent = entry.event_type in CASE_EVENT_LABELS;
+
+      const color = isOverride  ? "c-amber"
+                  : isCaseEvent ? "muted"
+                  : (ACTION_COLORS[entry.action] || "muted");
+
+      const dotStyle = isOverride
+        ? `background:var(--c-amber);border:2px solid var(--c-amber);box-sizing:border-box;`
+        : isCaseEvent
+          ? `background:#9ca3af;`
+          : `background:var(--${color})`;
+
+      const itemClass = isOverride  ? "timeline-item override-event"
+                      : isCaseEvent ? "timeline-item case-event"
+                      : "timeline-item";
+
+      const actionLabel = isOverride  ? "Analyst Override"
+                        : isCaseEvent ? (CASE_EVENT_LABELS[entry.event_type] || entry.event_type)
+                        : (ACTION_SHORT[entry.action] || entry.action);
+
+      const periodLabel = entry.period || entry.date;
+      const analystLine = isCaseEvent && entry.analyst
+        ? `<div class="timeline-analyst">${entry.analyst}</div>`
+        : "";
+      const actionStyle = isCaseEvent ? `color:#374151` : `color:var(--${color})`;
+
+      return `
+        <div class="${itemClass}">
+          <div class="timeline-dot" style="${dotStyle}"></div>
+          <div class="timeline-body">
+            <div class="timeline-header">
+              <span class="timeline-action" style="${actionStyle}">${actionLabel}</span>
+              <span class="timeline-date">${periodLabel}</span>
+            </div>
+            <div class="timeline-reason">${entry.reason}</div>
+            ${analystLine}
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <div class="section-title">Risk History</div>
+      <div class="card" style="margin-bottom:24px;">
+        <div class="timeline">${items}</div>
+      </div>
+    `;
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  loadMerchant();
+</script>
+</body>
+</html>
