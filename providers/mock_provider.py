@@ -12,11 +12,18 @@ MOCK_MERCHANTS = {
     "a1b2c3d4-0003-0003-0003-000000000003": {"name": "Tienda Nueva"},
 }
 
-# Argentina profiles (ARS)
+# Argentina profiles (ARS) — 10 merchants, 5 sectors, 5 actions
 MOCK_MERCHANTS_AR = {
-    "a1b2c3d4-0004-0004-0004-000000000004": {"name": "Panadería San Martín",  "bank": "Banco Nación"},
-    "a1b2c3d4-0005-0005-0005-000000000005": {"name": "Ferretería López",       "bank": "Banco Galicia"},
-    "a1b2c3d4-0006-0006-0006-000000000006": {"name": "Almacén El Toro",        "bank": "Brubank"},
+    "a1b2c3d4-0004-0004-0004-000000000004": {"name": "Panadería San Martín",      "bank": "Banco Nación",   "sector": "gastronomia"},
+    "a1b2c3d4-0005-0005-0005-000000000005": {"name": "Ferretería López",           "bank": "Banco Galicia",  "sector": "ferreteria"},
+    "a1b2c3d4-0006-0006-0006-000000000006": {"name": "Almacén El Toro",            "bank": "Brubank",        "sector": "almacen"},
+    "a1b2c3d4-0007-0007-0007-000000000007": {"name": "Kiosco Don Julio",           "bank": "Banco Nación",   "sector": "kiosco"},
+    "a1b2c3d4-0008-0008-0008-000000000008": {"name": "Librería Central",           "bank": "Banco Galicia",  "sector": "libreria"},
+    "a1b2c3d4-0009-0009-0009-000000000009": {"name": "Taller Mecánico Rodríguez",  "bank": "HSBC Argentina", "sector": "taller"},
+    "a1b2c3d4-0010-0010-0010-000000000010": {"name": "Verdulería La Fresca",       "bank": "Brubank",        "sector": "verduleria"},
+    "a1b2c3d4-0011-0011-0011-000000000011": {"name": "Carnicería El Gaucho",       "bank": "Banco Nación",   "sector": "carniceria"},
+    "a1b2c3d4-0012-0012-0012-000000000012": {"name": "Fotocopias Rápidas",         "bank": "Banco Galicia",  "sector": "fotocopias"},
+    "a1b2c3d4-0013-0013-0013-000000000013": {"name": "Indumentaria Moda BA",       "bank": "Santander",      "sector": "indumentaria"},
 }
 
 
@@ -290,6 +297,207 @@ def _generate_almacen_el_toro(link_id: str) -> list[dict]:
     return txs
 
 
+def _generate_kiosco_don_julio(link_id: str) -> list[dict]:
+    """
+    Kiosco Don Julio — stable, 8 diversified sources, slight growth.
+    Expected action: healthy (all green, det ~0.11, not > 0.20).
+    Window design: starts [2, 33, 63] so adj=[0,31,61] → clean window boundaries.
+    """
+    txs = []
+    sources = [
+        "Ventas Mostrador", "Mercado Pago Kiosco", "MODO Pagos",
+        "Clientes Barrio A", "Clientes Barrio B", "Clientes Barrio C",
+        "Delivery Rappi", "Transferencias Clientes",
+    ]
+    # 8 inflows per window, one per source (equal per-source totals → concentration ~37%)
+    for window_start, amount in [(2, 440_000), (33, 400_000), (63, 370_000)]:
+        for j, da in enumerate(range(window_start, window_start + 29, 4)):
+            if j >= len(sources):
+                break
+            txs.append(_ar_tx(link_id, da, amount, sources[j]))
+
+    # Rent: monthly, adj=[10,40,70] → one per window
+    for da in [12, 42, 72]:
+        txs.append(_ar_tx(link_id, da, -200_000, "Arrendador Kiosco"))
+    # Supply: biweekly, 2 per window adj=[5,19] / [35,49] / [65,79]
+    for da in [7, 21, 35, 49, 65, 79]:
+        txs.append(_ar_tx(link_id, da, -65_000, "Distribuidora Snacks"))
+
+    return txs
+
+
+def _generate_libreria_central(link_id: str) -> list[dict]:
+    """
+    Librería Central — thin margins (inflows barely exceed outflows).
+    Expected action: review_now (runway red ~14d; coverage amber ~1.46; det amber ~0).
+    Window design: starts [2, 33, 63]; equal outflows per window via explicit days.
+    """
+    txs = []
+    sources = [
+        "Ventas Mostrador", "Mercado Libre Libros", "Tarjetas Crédito",
+        "MODO Pagos", "Transferencias", "Mercado Pago", "PagoMisCuentas",
+    ]
+    # 7 inflows per window at equal amounts → equal 30d/31-60d net → det = 0 (amber)
+    for window_start in [2, 33, 63]:
+        for j, da in enumerate(range(window_start, window_start + 25, 4)):
+            if j >= len(sources):
+                break
+            txs.append(_ar_tx(link_id, da, 115_000, sources[j]))
+
+    # Rent: one per window adj=[10,40,70]
+    for da in [12, 42, 72]:
+        txs.append(_ar_tx(link_id, da, -350_000, "Inmobiliaria Norte"))
+    # Book supplier: biweekly, 2 per window adj=[5,19] / [35,49] / [65,79]
+    for da in [7, 21, 35, 49, 65, 79]:
+        txs.append(_ar_tx(link_id, da, -100_000, "Editorial Distribuidora"))
+
+    return txs
+
+
+def _generate_taller_mecanico(link_id: str) -> list[dict]:
+    """
+    Taller Mecánico Rodríguez — USD parts imports ~15 % of outflows, else healthy.
+    Expected action: monitor (fx_mismatch amber).
+    """
+    import random
+    rng = random.Random(9009)
+    txs = []
+    sources = [
+        "Ventas Taller", "Seguros Provincias", "Flotas Empresariales",
+        "Talleres Aliados", "Particulares", "Municipio Contratos",
+        "Transporte Logística",
+    ]
+    for i, da in enumerate(range(2, 90, 7)):
+        txs.append(_ar_tx(link_id, da, rng.randint(1_100_000, 1_400_000), sources[i % len(sources)]))
+
+    # ARS suppliers (recurring)
+    for da in range(6, 90, 14):
+        txs.append(_ar_tx(link_id, da, -rng.randint(320_000, 380_000), "Repuestos Nacionales SA"))
+    for da in [10, 40, 70]:
+        txs.append(_ar_tx(link_id, da, -520_000, "Local Comercial"))
+
+    # USD parts imports (~15 % of outflows) — 3 times in 90d
+    for da in [15, 45, 75]:
+        txs.append(_ar_tx(link_id, da, -rng.randint(250_000, 300_000),
+                          "Parts Import USA", currency="USD",
+                          description="Repuestos importados USD"))
+
+    return txs
+
+
+def _generate_verduleria_la_fresca(link_id: str) -> list[dict]:
+    """
+    Verdulería La Fresca — single buyer, revenue collapsing, high burn.
+    Expected action: reduce_exposure (runway red + concentration red + det red).
+    """
+    import random
+    rng = random.Random(1010)
+    txs = []
+
+    # Single inflow source: concentration = 1.0 (red)
+    for da in range(3, 30, 7):    # 30d: ~200k/week (crashing)
+        txs.append(_ar_tx(link_id, da, rng.randint(180_000, 220_000), "Mercado Municipal"))
+    for da in range(32, 62, 7):   # 31-60d: ~700k/week (was decent)
+        txs.append(_ar_tx(link_id, da, rng.randint(650_000, 750_000), "Mercado Municipal"))
+    for da in range(63, 91, 7):   # 61-90d: ~900k/week (was even better)
+        txs.append(_ar_tx(link_id, da, rng.randint(850_000, 950_000), "Mercado Municipal"))
+
+    # High ARS costs (fixed, not going down)
+    for da in [8, 38, 68]:
+        txs.append(_ar_tx(link_id, da, -580_000, "Arrendador Puesto"))
+    for da in range(5, 91, 7):
+        txs.append(_ar_tx(link_id, da, -rng.randint(180_000, 220_000), "Proveedor Frutas"))
+
+    return txs
+
+
+def _generate_carniceria_el_gaucho(link_id: str) -> list[dict]:
+    """
+    Carnicería El Gaucho — diversified, slight positive trend.
+    Expected action: healthy (all green, det ~0.17, runway > 60d).
+    Window design: starts [2, 33, 63]; equal outflows per window.
+    """
+    txs = []
+    sources = [
+        "Ventas Mostrador", "Mercado Pago Gaucho", "Delivery Local",
+        "Restaurantes BA", "Asados Empresariales", "Clientes Mayoristas",
+        "MODO Pagos", "Transferencias Directas",
+    ]
+    # 8 sources × 3 windows; recent window has higher amounts → det ~0.17
+    for window_start, amount in [(2, 680_000), (33, 600_000), (63, 560_000)]:
+        for j, da in enumerate(range(window_start, window_start + 29, 4)):
+            if j >= len(sources):
+                break
+            txs.append(_ar_tx(link_id, da, amount, sources[j]))
+
+    # Rent: one per window adj=[10,40,70]
+    for da in [12, 42, 72]:
+        txs.append(_ar_tx(link_id, da, -450_000, "Local Comercial BA"))
+    # Meat supplier: biweekly, 2 per window adj=[7,21] / [35,49] / [65,79]
+    for da in [9, 23, 37, 51, 67, 81]:
+        txs.append(_ar_tx(link_id, da, -300_000, "Frigorífico Central"))
+
+    return txs
+
+
+def _generate_fotocopias_rapidas(link_id: str) -> list[dict]:
+    """
+    Fotocopias Rápidas — 5 equal sources, stable margins, tight runway.
+    Expected action: review_now (runway amber ~52d; concentration amber 60%; det amber 0).
+    Window design: starts [2, 33, 63]; equal amounts → det = 0; 5 sources → conc = 60%.
+    """
+    txs = []
+    sources = [
+        "Universidad BA", "Empresa Editorial", "Colegio Nacional",
+        "Oficinas Corporativas", "Particulares y Varios",
+    ]
+    # 5 inflows per window at equal amounts → top-3/total = 3/5 = 60% (amber)
+    for window_start in [2, 33, 63]:
+        for j, da in enumerate(range(window_start, window_start + 17, 4)):
+            if j >= len(sources):
+                break
+            txs.append(_ar_tx(link_id, da, 360_000, sources[j]))
+
+    # Rent: one per window adj=[10,40,70]
+    for da in [12, 42, 72]:
+        txs.append(_ar_tx(link_id, da, -300_000, "Local Comercial"))
+    # Equipment lease: biweekly, 2 per window adj=[5,19] / [35,49] / [65,79]
+    for da in [7, 21, 35, 49, 65, 79]:
+        txs.append(_ar_tx(link_id, da, -180_000, "Alquiler Equipos Canon"))
+
+    return txs
+
+
+def _generate_indumentaria_moda_ba(link_id: str) -> list[dict]:
+    """
+    Indumentaria Moda BA — fast-growing fashion retail, diversified channels.
+    Expected action: opportunity (all green, det > 0.20).
+    """
+    import random
+    rng = random.Random(1313)
+    txs = []
+    sources = [
+        "Tienda Online", "Instagram Shop", "Mercado Libre Ropa",
+        "Ventas Mostrador", "Mayoristas Textiles", "TiendaNube",
+        "WhatsApp Pedidos", "Feria Palermo",
+    ]
+    # Strong growth: recent 30d ~2.5M, prior 30d ~1.7M
+    for i, da in enumerate(range(3, 30, 4)):   # 7 inflows in 30d
+        txs.append(_ar_tx(link_id, da, rng.randint(330_000, 390_000), sources[i % len(sources)]))
+    for i, da in enumerate(range(32, 62, 5)):  # 6 inflows in 31-60d
+        txs.append(_ar_tx(link_id, da, rng.randint(260_000, 300_000), sources[i % len(sources)]))
+    for i, da in enumerate(range(63, 90, 5)):  # 6 inflows in 61-90d
+        txs.append(_ar_tx(link_id, da, rng.randint(220_000, 260_000), sources[i % len(sources)]))
+
+    # ARS costs
+    for da in [10, 40, 70]:
+        txs.append(_ar_tx(link_id, da, -380_000, "Local Palermo"))
+    for da in range(6, 90, 14):
+        txs.append(_ar_tx(link_id, da, -rng.randint(200_000, 260_000), "Proveedor Telas BA"))
+
+    return txs
+
+
 _GENERATORS = {
     "a1b2c3d4-0001-0001-0001-000000000001": _generate_el_patio,
     "a1b2c3d4-0002-0002-0002-000000000002": _generate_velasquez,
@@ -297,6 +505,13 @@ _GENERATORS = {
     "a1b2c3d4-0004-0004-0004-000000000004": _generate_panaderia_san_martin,
     "a1b2c3d4-0005-0005-0005-000000000005": _generate_ferreteria_lopez,
     "a1b2c3d4-0006-0006-0006-000000000006": _generate_almacen_el_toro,
+    "a1b2c3d4-0007-0007-0007-000000000007": _generate_kiosco_don_julio,
+    "a1b2c3d4-0008-0008-0008-000000000008": _generate_libreria_central,
+    "a1b2c3d4-0009-0009-0009-000000000009": _generate_taller_mecanico,
+    "a1b2c3d4-0010-0010-0010-000000000010": _generate_verduleria_la_fresca,
+    "a1b2c3d4-0011-0011-0011-000000000011": _generate_carniceria_el_gaucho,
+    "a1b2c3d4-0012-0012-0012-000000000012": _generate_fotocopias_rapidas,
+    "a1b2c3d4-0013-0013-0013-000000000013": _generate_indumentaria_moda_ba,
 }
 
 

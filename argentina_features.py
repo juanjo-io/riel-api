@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from collections import defaultdict
+from argentina_config import FX_KEYWORDS
 
 
 def _get_reference_date(transactions: list) -> date:
@@ -83,7 +84,6 @@ def extract_argentina_features(transactions: list, account_balance: float = 0.0)
         real_cash_coverage = 3.0
 
     # ── FX Mismatch Exposure ─────────────────────────────────────────────────
-    FX_KEYWORDS = {"usd", "dolar", "dolares", "eur", "euro", "euros"}
     total_outflows_90d = sum(-(t["amount"]) for t in txs_90d if (t.get("amount") or 0) < 0)
     fx_outflows = 0.0
 
@@ -136,3 +136,14 @@ def extract_argentina_features(transactions: list, account_balance: float = 0.0)
         "revenue_concentration": revenue_concentration,
         "deterioration_index": deterioration_index,
     }
+
+
+def extract_argentina_features_window(
+    transactions: list,
+    window_days: int,
+    account_balance: float = 0.0,
+) -> dict:
+    """Extract features using only the most recent `window_days` of transactions."""
+    ref = _get_reference_date(transactions)
+    windowed = [t for t in transactions if _days_ago(t, ref) <= window_days]
+    return extract_argentina_features(windowed, account_balance)

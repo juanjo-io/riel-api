@@ -26,6 +26,7 @@ from features import extract_features
 from scorer import calculate_riel_score
 from argentina_features import extract_argentina_features
 from argentina_scorer import score_argentina
+from argentina_portfolio import build_portfolio, build_merchant_detail
 from providers.registry import get_provider
 
 load_dotenv()
@@ -773,6 +774,59 @@ def argentina_score(link_id: str, _key: dict = Depends(verify_api_key)):
         "metric_lights": result["metric_lights"],
         "provider": dp.provider_name(),
     }
+
+
+@app.get("/argentina/portfolio")
+def argentina_portfolio(_key: dict = Depends(verify_api_key)):
+    """
+    Return portfolio-level aggregates + per-merchant rows for all Argentina merchants.
+    Runs the full 5-metric pipeline for each merchant via the configured provider.
+    """
+    try:
+        dp = get_provider()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    from providers.mock_provider import MOCK_MERCHANTS_AR
+    merchants = []
+    for link_id, meta in MOCK_MERCHANTS_AR.items():
+        try:
+            txs = dp.get_transactions(link_id)
+        except Exception as e:
+            continue  # skip merchants that fail; don't abort the whole portfolio
+        merchants.append({
+            "link_id":      link_id,
+            "name":         meta["name"],
+            "sector":       meta.get("sector", "other"),
+            "bank":         meta.get("bank", ""),
+            "transactions": txs,
+        })
+
+    return build_portfolio(merchants)
+
+
+@app.get("/argentina/merchant/{link_id}/data")
+def argentina_merchant_data(link_id: str, _key: dict = Depends(verify_api_key)):
+    """
+    Full metrics + 30/60/90d trend for a single Argentina merchant.
+    """
+    try:
+        dp = get_provider()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    try:
+        txs = dp.get_transactions(link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+
+    from providers.mock_provider import MOCK_MERCHANTS_AR
+    meta = MOCK_MERCHANTS_AR.get(link_id, {})
+    name   = meta.get("name",   link_id)
+    sector = meta.get("sector", "other")
+    bank   = meta.get("bank",   "")
+
+    return build_merchant_detail(link_id, name, sector, bank, txs)
 
 
 # ── Webhooks ───────────────────────────────────────────────────────────────────
