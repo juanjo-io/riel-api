@@ -12,6 +12,13 @@ MOCK_MERCHANTS = {
     "a1b2c3d4-0003-0003-0003-000000000003": {"name": "Tienda Nueva"},
 }
 
+# Argentina profiles (ARS)
+MOCK_MERCHANTS_AR = {
+    "a1b2c3d4-0004-0004-0004-000000000004": {"name": "Panadería San Martín",  "bank": "Banco Nación"},
+    "a1b2c3d4-0005-0005-0005-000000000005": {"name": "Ferretería López",       "bank": "Banco Galicia"},
+    "a1b2c3d4-0006-0006-0006-000000000006": {"name": "Almacén El Toro",        "bank": "Brubank"},
+}
+
 
 def _tx(link_id, days_ago, amount, counterparty, category):
     today = date.today()
@@ -137,10 +144,159 @@ def _generate_tienda_nueva(link_id: str) -> list[dict]:
     return txs
 
 
+def _ar_tx(link_id, days_ago, amount, counterparty, currency="ARS", description=None):
+    today = date.today()
+    return {
+        "id":               f"tx-ar-{link_id[-4:]}-{days_ago:04d}",
+        "account":          f"acc-ar-{link_id[-4:]}",
+        "link":             link_id,
+        "value_date":       (today - timedelta(days=days_ago)).isoformat(),
+        "amount":           amount,
+        "currency":         currency,
+        "description":      description or f"{counterparty}",
+        "category":         "transfer",
+        "counterparty_name": counterparty,
+        "type":             "INFLOW" if amount > 0 else "OUTFLOW",
+        "status":           "PROCESSED",
+    }
+
+
+def _generate_panaderia_san_martin(link_id: str) -> list[dict]:
+    """
+    Panadería San Martín — 180 days, ARS, 8 inflow sources, growing trend.
+    Expected action: opportunity (all green + deterioration > 0.20).
+    """
+    import random
+    rng = random.Random(4004)
+    txs = []
+
+    # 8 inflow counterparties — diversified, no single one dominates
+    sources = [
+        "Ventas Mostrador",
+        "Mercado Pago San Martín",
+        "MODO Pagos",
+        "Buenas Migas Distribuidora",
+        "Cafetería del Barrio",
+        "Confitería Los Andes",
+        "Catering Eventos BA",
+        "Almacén La Esquina",
+    ]
+
+    # Weekly inflows, growing ~20 % in recent 30 days vs prior 30 days
+    # days 1–30: avg 1 850 000 ARS/week → 4 weeks = 7 400 000
+    # days 31–60: avg 1 500 000 ARS/week → 4 weeks = 6 000 000
+    # days 61–180: avg 1 300 000 ARS/week
+    for i, da in enumerate(range(3, 180, 7)):
+        if da <= 30:
+            base = 1_700_000
+        elif da <= 60:
+            base = 1_400_000
+        else:
+            base = 1_200_000
+        amount = rng.randint(base, base + 300_000)
+        txs.append(_ar_tx(link_id, da, amount, sources[i % len(sources)]))
+
+    # Flour supplier: weekly recurring outflows (main contractual obligation)
+    for da in range(4, 180, 7):
+        txs.append(_ar_tx(link_id, da, -rng.randint(100_000, 140_000), "Harinera del Plata"))
+
+    # Rent: monthly (3 times in 90-day window counts as contractual)
+    for m in range(6):
+        txs.append(_ar_tx(link_id, 10 + m * 30, -380_000, "Inmobiliaria Norte"))
+
+    # Utilities: monthly
+    for m in range(6):
+        base = 12 + m * 30
+        txs.append(_ar_tx(link_id, base,     -rng.randint(40_000, 60_000),  "Edesur"))
+        txs.append(_ar_tx(link_id, base + 1, -rng.randint(20_000, 35_000),  "Metrogas"))
+
+    # Packaging supplier: biweekly
+    for da in range(6, 180, 14):
+        txs.append(_ar_tx(link_id, da, -rng.randint(55_000, 85_000), "Envases Rápido"))
+
+    return txs
+
+
+def _generate_ferreteria_lopez(link_id: str) -> list[dict]:
+    """
+    Ferretería López — 90 days, ARS with USD tool imports (~15 % of outflows).
+    Expected action: monitor (one amber: fx_mismatch_exposure 0.14).
+    """
+    import random
+    rng = random.Random(5005)
+    txs = []
+
+    # Steady weekly inflows from 7 evenly-distributed sources (concentration < 50 %)
+    sources = [
+        "Ventas Mostrador López",
+        "Transferencia Clientes",
+        "Mercado Pago Ferretería",
+        "Constructora Palermo",
+        "Corralón del Sur",
+        "Obras Servicios SA",
+        "Electricidad Rápida",
+    ]
+    for i, da in enumerate(range(2, 90, 7)):
+        amount = rng.randint(1_250_000, 1_450_000)  # narrow range keeps shares even
+        txs.append(_ar_tx(link_id, da, amount, sources[i % len(sources)]))
+
+    # Local suppliers (ARS, recurring)
+    for da in range(5, 90, 14):
+        txs.append(_ar_tx(link_id, da, -rng.randint(280_000, 360_000), "Distribuidora Herramientas SA"))
+    for da in range(7, 90, 30):
+        txs.append(_ar_tx(link_id, da, -340_000, "Inmobiliaria Centro"))
+
+    # USD tool imports — currency USD, ~15 % of total outflows
+    for da in [15, 45, 75]:
+        txs.append(_ar_tx(link_id, da, -rng.randint(180_000, 220_000),
+                          "Stanley Tools Import", currency="USD",
+                          description="Importacion herramientas USD"))
+
+    # Utilities (ARS)
+    for da in range(10, 90, 30):
+        txs.append(_ar_tx(link_id, da, -rng.randint(45_000, 65_000), "Edenor"))
+
+    return txs
+
+
+def _generate_almacen_el_toro(link_id: str) -> list[dict]:
+    """
+    Almacén El Toro — 60 days, cash squeeze, high FX, single customer.
+    Expected action: reduce_exposure (multiple reds + deterioration < -0.30).
+    """
+    import random
+    rng = random.Random(6006)
+    txs = []
+
+    # Single inflow source (concentration = 1.0 → red)
+    # Declining: 30d inflows ~1.8M, 31-60d inflows ~3.6M → deterioration ≈ -0.50
+    for da in range(3, 30, 7):   # 4 inflows in last 30d
+        txs.append(_ar_tx(link_id, da, rng.randint(380_000, 520_000), "Supermercado Vecinal"))
+    for da in range(32, 62, 7):  # 4 inflows in 31-60d window (2x larger)
+        txs.append(_ar_tx(link_id, da, rng.randint(800_000, 950_000), "Supermercado Vecinal"))
+
+    # High USD/EUR costs (FX > 0.30 → red)
+    for da in [8, 22, 38, 52]:
+        txs.append(_ar_tx(link_id, da, -rng.randint(300_000, 400_000),
+                          "Importadora Buenos Aires", currency="USD",
+                          description="Importacion productos USD"))
+
+    # ARS outflows (rent, local supplier — high relative to inflows)
+    for da in [10, 40]:
+        txs.append(_ar_tx(link_id, da, -580_000, "Arrendador Local"))
+    for da in range(5, 62, 14):
+        txs.append(_ar_tx(link_id, da, -rng.randint(150_000, 220_000), "Proveedor Lácteos SA"))
+
+    return txs
+
+
 _GENERATORS = {
     "a1b2c3d4-0001-0001-0001-000000000001": _generate_el_patio,
     "a1b2c3d4-0002-0002-0002-000000000002": _generate_velasquez,
     "a1b2c3d4-0003-0003-0003-000000000003": _generate_tienda_nueva,
+    "a1b2c3d4-0004-0004-0004-000000000004": _generate_panaderia_san_martin,
+    "a1b2c3d4-0005-0005-0005-000000000005": _generate_ferreteria_lopez,
+    "a1b2c3d4-0006-0006-0006-000000000006": _generate_almacen_el_toro,
 }
 
 
@@ -164,7 +320,24 @@ class MockProvider(DataProvider):
         with open(path) as f:
             return json.load(f)
 
+    def list_argentina_merchants(self) -> list[dict]:
+        return [
+            {"link_id": k, **v}
+            for k, v in MOCK_MERCHANTS_AR.items()
+        ]
+
     def get_account_summary(self, link_id: str) -> dict:
+        if link_id in MOCK_MERCHANTS_AR:
+            meta = MOCK_MERCHANTS_AR[link_id]
+            return {
+                "id":          f"acc-ar-{link_id[-4:]}",
+                "link":        link_id,
+                "institution": {"name": meta.get("bank", "Banco Nación")},
+                "category":    "CHECKING_ACCOUNT",
+                "currency":    "ARS",
+                "name":        meta["name"],
+                "balance":     {"current": 3_500_000, "available": 3_200_000},
+            }
         name = MOCK_MERCHANTS.get(link_id, {}).get("name", "Mock Business")
         return {
             "id":          f"acc-mock-{link_id[-4:] if len(link_id) >= 4 else '0000'}",

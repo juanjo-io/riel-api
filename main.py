@@ -24,6 +24,8 @@ from pydantic import BaseModel
 from supabase import create_client
 from features import extract_features
 from scorer import calculate_riel_score
+from argentina_features import extract_argentina_features
+from argentina_scorer import score_argentina
 from providers.registry import get_provider
 
 load_dotenv()
@@ -735,6 +737,40 @@ def score_explain(link_id: str, provider: Optional[str] = None,
         "suggested_limit_cop": result["suggested_limit_cop"],
         "explanation": explanation,
         "features": features,
+        "provider": dp.provider_name(),
+    }
+
+
+# ── Argentina Scoring ──────────────────────────────────────────────────────────
+
+@app.get("/argentina/score/{link_id}")
+def argentina_score(link_id: str, _key: dict = Depends(verify_api_key)):
+    """
+    Run the Argentina 5-metric risk pipeline for a given link_id.
+    Returns metrics + action (healthy/monitor/review_now/reduce_exposure/opportunity).
+    """
+    try:
+        dp = get_provider()
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    try:
+        transactions = dp.get_transactions(link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+
+    metrics = extract_argentina_features(transactions)
+    result = score_argentina(metrics)
+
+    return {
+        "link_id": link_id,
+        "survival_runway_days": metrics["survival_runway_days"],
+        "real_cash_coverage": metrics["real_cash_coverage"],
+        "fx_mismatch_exposure": metrics["fx_mismatch_exposure"],
+        "revenue_concentration": metrics["revenue_concentration"],
+        "deterioration_index": metrics["deterioration_index"],
+        "action": result["action"],
+        "metric_lights": result["metric_lights"],
         "provider": dp.provider_name(),
     }
 
