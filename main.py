@@ -27,6 +27,8 @@ from scorer import calculate_riel_score
 from argentina_features import extract_argentina_features
 from argentina_scorer import score_argentina
 from argentina_portfolio import build_portfolio, build_merchant_detail
+from argentina_signals import get_external_signal, apply_fx_signal, build_refresh_event
+from argentina_config import REFRESH_MODEL_NAME
 from providers.registry import get_provider
 
 load_dotenv()
@@ -1053,6 +1055,76 @@ def dashboard_merchant(link_id: str, lender: str = Depends(get_current_lender)):
 def merchant_page(link_id: str, lender: str = Depends(get_current_lender)):
     """Serve the merchant detail page (cookie-gated)."""
     return FileResponse(os.path.join(BASE_DIR, "merchant.html"))
+
+
+@app.post("/argentina/merchant/{link_id}/refresh")
+def argentina_merchant_refresh(link_id: str, lender: str = Depends(get_current_lender)):
+    """
+    Manual agent refresh: fetch one external FX signal, recompute FX-affected
+    metrics, rescore, and return updated merchant detail with a new timeline entry.
+
+    Phase 3 v0: signal is mocked (deterministic per link_id).
+    The response model name is upgraded to REFRESH_MODEL_NAME (v0_3) to indicate
+    that an external signal was applied.
+    """
+    from providers.mock_provider import (
+        MockProvider, MOCK_MERCHANTS_AR, MOCK_REVIEW_STATE_AR,
+        MOCK_OVERRIDES_AR, MOCK_CASE_LOG_AR,
+    )
+    from argentina_config import ACTION_LABELS, ACTION_STATUS_COLORS
+
+    dp = MockProvider()
+    try:
+        txs = dp.get_transactions(link_id)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Provider error: {e}")
+
+    meta   = MOCK_MERCHANTS_AR.get(link_id, {})
+    name   = meta.get("name",   link_id)
+    sector = meta.get("sector", "other")
+    bank   = meta.get("bank",   "")
+
+    # Base metrics and score (from transactions as-is)
+    base_metrics = extract_argentina_features(txs)
+    base_scored  = score_argentina(base_metrics)
+
+    # External signal + updated metrics
+    signal          = get_external_signal(link_id)
+    updated_metrics = apply_fx_signal(txs, base_metrics, signal)
+    updated_scored  = score_argentina(updated_metrics)
+
+    # Full detail via existing pipeline (uses base metrics internally)
+    detail = build_merchant_detail(
+        link_id, name, sector, bank, txs,
+        review_state=MOCK_REVIEW_STATE_AR.get(link_id),
+        override=MOCK_OVERRIDES_AR.get(link_id),
+        case_log=MOCK_CASE_LOG_AR.get(link_id, []),
+    )
+
+    # Patch updated FX metric into the response
+    detail["fx_mismatch_exposure"] = updated_metrics["fx_mismatch_exposure"]
+
+    # Update scoring fields if the action changed
+    new_action = updated_scored["action"]
+    detail["action"]        = new_action
+    detail["metric_lights"] = updated_scored["metric_lights"]
+    detail["action_label"]  = ACTION_LABELS[new_action]
+    detail["status_color"]  = ACTION_STATUS_COLORS[new_action]
+
+    # Inject agent_refresh event into timeline
+    refresh_event = build_refresh_event(
+        signal, base_metrics, updated_metrics,
+        base_scored["action"], new_action,
+    )
+    detail["risk_history"].append(refresh_event)
+    detail["risk_history"].sort(key=lambda e: e["date"])
+
+    # Stamp with refresh model name and signal metadata
+    detail["last_refreshed"] = refresh_event["date"]
+    detail["model"]          = {**detail["model"], "name": REFRESH_MODEL_NAME}
+    detail["last_signal"]    = signal
+
+    return detail
 
 
 @app.get("/dashboard/stats")

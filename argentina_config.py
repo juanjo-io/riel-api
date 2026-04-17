@@ -46,9 +46,16 @@ FX_KEYWORDS = {"usd", "dolar", "dolares", "eur", "euro", "euros"}
 # ── Model metadata ─────────────────────────────────────────────────────────────
 # Bump MODEL_NAME on any threshold or logic change so API consumers can track
 # which version produced a given score.
-MODEL_NAME       = "riel_argentina_v0_2"
-LOOKBACK_WINDOWS = [30, 60, 90]   # days; used for trend windows and history snapshots
-REFRESH_MODE     = "batch"         # "batch" | "realtime"; batch = periodic full recompute
+#
+# MODEL_NAME         — used by the batch scoring pipeline (unchanged thresholds + logic)
+# REFRESH_MODEL_NAME — reported when a manual agent refresh applies an external FX signal.
+#                      v0_3 uses the same thresholds and scoring rules as v0_2; the only
+#                      difference is that fx_mismatch_exposure is recomputed using a live
+#                      (mock in Phase 3 v0) FX rate rather than raw transaction amounts alone.
+MODEL_NAME         = "riel_argentina_v0_2"
+REFRESH_MODEL_NAME = "riel_argentina_v0_3"
+LOOKBACK_WINDOWS   = [30, 60, 90]   # days; used for trend windows and history snapshots
+REFRESH_MODE       = "batch"         # "batch" | "realtime"; batch = periodic full recompute
 
 # ── Review cadence (days between reviews by risk state) ───────────────────────
 REVIEW_CADENCE_DAYS = {

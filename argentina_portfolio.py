@@ -4,6 +4,10 @@ Portfolio service layer for Argentina SMB risk monitoring.
 Entry points:
     build_portfolio(merchants)          → portfolio-level summary + per-merchant rows
     build_merchant_detail(link_id, ...) → single merchant full metrics + 30/60/90d trend
+
+Public constants:
+    _CASE_EVENT_LABELS   — human-readable labels for case/action event types
+    _HIGH_RISK_ACTIONS   — frozenset of action strings that require elevated review cadence
 """
 from datetime import date, timedelta
 from typing import Optional
@@ -148,6 +152,15 @@ def _generate_alerts(metrics: dict) -> list[dict]:
 
 _HIGH_RISK_ACTIONS = frozenset({"reduce_exposure", "review_now"})
 
+_CASE_EVENT_LABELS: dict[str, str] = {
+    "flag_raised":                 "Case Flagged",
+    "analyst_reviewed":            "Analyst Reviewed",
+    "recommendation_confirmed":    "Recommendation Confirmed",
+    "no_action_taken":             "No Action Taken",
+    "reduce_exposure_recommended": "Reduce Exposure Recommended",
+    "topup_candidate_flagged":     "Top-Up Candidate Flagged",
+}
+
 _MODEL_META = {
     "name":             MODEL_NAME,
     "lookback_windows": LOOKBACK_WINDOWS,
@@ -173,10 +186,12 @@ def _build_risk_history(transactions: list) -> list[dict]:
         reason  = drivers[0]["description"] if drivers else "All metrics within normal range"
         as_of   = today.isoformat() if window == 30 else (today - timedelta(days=window)).isoformat()
         snapshots.append({
-            "date":   as_of,
-            "action": scored["action"],
-            "reason": reason,
-            "period": "Current (last 30d)" if window == 30 else f"~{window} days ago",
+            "date":       as_of,
+            "event_type": "state",
+            "action":     scored["action"],
+            "label":      scored["action"].replace("_", " ").title(),
+            "reason":     reason,
+            "period":     "Current (last 30d)" if window == 30 else f"~{window} days ago",
         })
 
     # Emit an entry only when the action changes; always include current snapshot.
@@ -430,6 +445,7 @@ def build_merchant_detail(
         history.append({
             "date":       ev_dt,
             "action":     override.get("current_recommendation", row["action"]),
+            "label":      "Analyst Override",
             "reason":     f"Analyst override by {override.get('override_by', 'unknown')}: "
                           f"{override.get('override_reason', '')}",
             "period":     "Override",
@@ -442,6 +458,7 @@ def build_merchant_detail(
         history.append({
             "date":       ev["date"],
             "event_type": ev["event_type"],
+            "label":      _CASE_EVENT_LABELS.get(ev["event_type"], ev["event_type"]),
             "action":     row["action"],   # context only; not a state change
             "reason":     ev.get("note", ""),
             "period":     ev["date"],

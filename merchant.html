@@ -187,15 +187,25 @@
     }
     .refresh-btn {
       background: none;
-      border: 1px solid var(--border);
+      border: 1px solid var(--accent);
       border-radius: 8px;
-      color: var(--faint);
+      color: var(--accent);
       font-family: inherit;
       font-size: 0.78rem;
       padding: 8px 14px;
-      cursor: not-allowed;
-      opacity: 0.55;
+      cursor: pointer;
       white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .refresh-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #fff;
+    }
+    .refresh-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+      border-color: var(--border);
+      color: var(--faint);
     }
     .refresh-hint {
       font-size: 0.66rem;
@@ -203,6 +213,24 @@
       text-align: right;
       max-width: 180px;
       line-height: 1.4;
+    }
+    .refresh-error {
+      font-size: 0.72rem;
+      color: var(--c-red);
+      text-align: right;
+      max-width: 180px;
+      margin-top: 4px;
+    }
+    /* Agent refresh timeline events */
+    .timeline-item.agent-refresh .timeline-dot {
+      background: var(--accent);
+    }
+    .timeline-item.agent-refresh .timeline-action {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .timeline-item.agent-refresh .timeline-reason {
+      font-size: 0.78rem;
     }
 
     /* ── Narrative ───────────────────────────────────────────── */
@@ -607,6 +635,30 @@
     }
   }
 
+  async function refreshRisk() {
+    const linkId = getLinkId();
+    const btn    = document.getElementById("refresh-btn");
+    const errEl  = document.getElementById("refresh-error");
+    btn.disabled    = true;
+    btn.textContent = "Refreshing…";
+    errEl.style.display = "none";
+    try {
+      const res = await fetch(`/argentina/merchant/${linkId}/refresh`, { method: "POST" });
+      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      render(data);
+      // Scroll to risk history section where the new agent_refresh entry appears
+      const hist = document.querySelector(".risk-history-section");
+      if (hist) hist.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (e) {
+      btn.disabled    = false;
+      btn.textContent = "Refresh Risk";
+      errEl.style.display = "";
+      errEl.textContent   = `Refresh failed: ${e.message}`;
+    }
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────────
   function render(d) {
     document.title = `Riél — ${d.name}`;
@@ -660,8 +712,9 @@
           </div>
         </div>
         <div class="refresh-block">
-          <button class="refresh-btn" disabled>Refresh Risk</button>
-          <div class="refresh-hint">Agentic refresh coming soon — current risk view is based on the latest batch run</div>
+          <button class="refresh-btn" id="refresh-btn" onclick="refreshRisk()">Refresh Risk</button>
+          <div class="refresh-hint" id="refresh-hint">Refresh risk uses an updated FX rate to recompute FX mismatch and risk; current view is from the last batch run.</div>
+          <div class="refresh-error" id="refresh-error" style="display:none;"></div>
         </div>
       </div>
     `;
@@ -1025,32 +1078,40 @@
     };
 
     const items = history.map(entry => {
-      const isOverride  = entry.event_type === "override";
-      const isCaseEvent = entry.event_type in CASE_EVENT_LABELS;
+      const isOverride     = entry.event_type === "override";
+      const isAgentRefresh = entry.event_type === "agent_refresh";
+      const isCaseEvent    = entry.event_type in CASE_EVENT_LABELS;
 
-      const color = isOverride  ? "c-amber"
-                  : isCaseEvent ? "muted"
+      const color = isOverride     ? "c-amber"
+                  : isAgentRefresh ? "accent"
+                  : isCaseEvent    ? "muted"
                   : (ACTION_COLORS[entry.action] || "muted");
 
       const dotStyle = isOverride
         ? `background:var(--c-amber);border:2px solid var(--c-amber);box-sizing:border-box;`
-        : isCaseEvent
-          ? `background:#9ca3af;`
-          : `background:var(--${color})`;
+        : isAgentRefresh
+          ? `background:var(--accent);`
+          : isCaseEvent
+            ? `background:#9ca3af;`
+            : `background:var(--${color})`;
 
-      const itemClass = isOverride  ? "timeline-item override-event"
-                      : isCaseEvent ? "timeline-item case-event"
+      const itemClass = isOverride     ? "timeline-item override-event"
+                      : isAgentRefresh ? "timeline-item agent-refresh"
+                      : isCaseEvent    ? "timeline-item case-event"
                       : "timeline-item";
 
-      const actionLabel = isOverride  ? "Analyst Override"
-                        : isCaseEvent ? (CASE_EVENT_LABELS[entry.event_type] || entry.event_type)
+      const actionLabel = isOverride     ? "Analyst Override"
+                        : isAgentRefresh ? (entry.label || "Agent Refresh")
+                        : isCaseEvent    ? (CASE_EVENT_LABELS[entry.event_type] || entry.event_type)
                         : (ACTION_SHORT[entry.action] || entry.action);
 
       const periodLabel = entry.period || entry.date;
       const analystLine = isCaseEvent && entry.analyst
         ? `<div class="timeline-analyst">${entry.analyst}</div>`
         : "";
-      const actionStyle = isCaseEvent ? `color:#374151` : `color:var(--${color})`;
+      const actionStyle = (isCaseEvent && !isAgentRefresh)
+        ? `color:#374151`
+        : `color:var(--${color})`;
 
       return `
         <div class="${itemClass}">
@@ -1068,9 +1129,11 @@
     }).join("");
 
     return `
-      <div class="section-title">Risk History</div>
-      <div class="card" style="margin-bottom:24px;">
-        <div class="timeline">${items}</div>
+      <div class="risk-history-section">
+        <div class="section-title">Risk History</div>
+        <div class="card" style="margin-bottom:24px;">
+          <div class="timeline">${items}</div>
+        </div>
       </div>
     `;
   }

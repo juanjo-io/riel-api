@@ -267,3 +267,74 @@ The portfolio response includes the following operational counters:
 | `open_case_count` | High-risk merchants (`reduce_exposure` or `review_now`) whose review is not yet `"reviewed"` |
 | `high_risk_by_sector` | Dict of sector → count for high-risk merchants, sorted descending by count |
 | `deteriorating_by_sector` | Dict of sector → average deterioration index, for sectors averaging below −0.10, sorted worst-first |
+
+---
+
+## 7. Agentic Refresh (Phase 3)
+
+### 7.1 Overview
+
+Model `riel_argentina_v0_3` extends v0_2 with a manual agentic refresh capability. When a lender triggers a refresh, an external FX signal is fetched and `fx_mismatch_exposure` is recomputed to reflect current ARS depreciation. All other metrics and thresholds remain identical to v0_2.
+
+| Attribute | v0_2 | v0_3 |
+|---|---|---|
+| Thresholds | Same | Same |
+| Scoring logic | Same | Same |
+| `fx_mismatch_exposure` | Raw transaction amounts | Adjusted by external FX rate |
+| Trigger | Batch (periodic) | Manual (lender button) |
+| Model name | `riel_argentina_v0_2` | `riel_argentina_v0_3` |
+
+### 7.2 Signal specification
+
+Each refresh fetches one signal of type `fx_rate_snapshot`:
+
+| Field | Type | Description |
+|---|---|---|
+| `signal_type` | string | Always `"fx_rate_snapshot"` |
+| `fx_adjustment_factor` | float | `new_rate / base_rate` (e.g. 985/900 = 1.094444) |
+| `base_rate_ars_usd` | int | ARS/USD rate at model scoring time |
+| `new_rate_ars_usd` | int | ARS/USD rate at refresh time |
+| `rate_change_pct` | float | `(factor − 1) × 100` |
+| `macro_stress` | string | `"low"` \| `"moderate"` \| `"high"` |
+| `source` | string | Data source identifier |
+| `as_of` | date | ISO date of signal capture |
+
+**Phase 3 v0 note:** All signals are deterministic mocks (no live API call). In production, replace `get_external_signal()` with a real FX data source (BCRA official rate, Dolarito informal index, or x402-gated aggregator).
+
+### 7.3 FX metric recomputation
+
+Only `fx_mismatch_exposure` is updated. The adjustment models ARS depreciation:
+
+```
+new_fx_outflows    = fx_outflows_90d × fx_adjustment_factor
+new_total_outflows = total_outflows_90d − fx_outflows_90d + new_fx_outflows
+new_fx_mismatch    = new_fx_outflows / new_total_outflows
+```
+
+A merchant with no FX-denominated outflows (no USD/EUR transactions or FX keywords in descriptions) is unaffected — the signal returns the base metrics unchanged.
+
+### 7.4 Timeline event
+
+A successful refresh appends an `agent_refresh` event to the merchant's `risk_history` timeline:
+
+| Field | Value |
+|---|---|
+| `event_type` | `"agent_refresh"` |
+| `label` | `"Agent Refresh (FX update)"` |
+| `reason` | Three-part: rate change, metric change (or "no impact"), recommendation change (or "unchanged") |
+| `signal` | Full signal dict embedded in the event |
+| `action` | Post-refresh recommendation |
+
+### 7.5 Governance
+
+- Refreshes are **manual only** — triggered by a lender pressing "Refresh Risk" on the merchant detail page.
+- No auto-refresh, no scheduled refresh, no multi-step agent chain.
+- Only one external signal type is consumed (`fx_rate_snapshot`). Adding new signal types requires a policy update and model version bump.
+- The lender must be authenticated (cookie) to trigger a refresh.
+
+### 7.6 Known limitations (Phase 3 v0)
+
+- FX signal is a deterministic mock — no live API call to BCRA or any FX aggregator.
+- Only `fx_mismatch_exposure` is recomputed. Survival runway and cash coverage are not adjusted for macro conditions.
+- Refresh result is not persisted — it lives only in the HTTP response. If the page is reloaded, the original batch score is shown.
+- No rate limiting on the refresh endpoint; a production deployment should add per-lender cooldown (e.g. one refresh per merchant per hour).
