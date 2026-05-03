@@ -630,7 +630,7 @@
 
     try {
       const res = await fetch("/dashboard/portfolio");
-      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (res.status === 401) { window.location = "/lender/login"; return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       _portfolio = await res.json();
       render(_portfolio);
@@ -928,7 +928,7 @@
 
   async function logout() {
     await fetch("/lender/logout", { method: "POST" });
-    window.location = "/lender/login-request";
+    window.location = "/lender/login";
   }
 
   // ── Boot ───────────────────────────────────────────────────────────────────

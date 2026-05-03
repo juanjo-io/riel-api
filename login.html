@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riél — Lender Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f7f6f2;
+      --surface:   #ffffff;
+      --border:    rgba(40,37,29,0.10);
+      --shadow:    0 1px 3px rgba(26,25,22,0.07);
+      --text:      #1a1916;
+      --muted:     #6b6760;
+      --faint:     #a9a8a3;
+      --accent:    #01696f;
+      --accent-h:  #0c4e54;
+      --accent-bg: #e0eeee;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 15px;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 48px 44px 40px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .wordmark {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.7rem;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .tagline {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 36px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0;
+      color: var(--faint);
+      font-size: 0.72rem;
+    }
+    .divider::before, .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="email"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="email"]:focus { border-color: var(--accent); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      text-align: center;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      margin-top: 12px;
+    }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-demo {
+      background: none;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+    .btn-demo:hover { background: var(--accent-bg); }
+    .btn-demo:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .msg {
+      font-size: 0.78rem;
+      margin-top: 12px;
+      min-height: 18px;
+      color: var(--muted);
+    }
+    .msg.error { color: #b92b2b; }
+
+    .demo-note {
+      font-size: 0.72rem;
+      color: var(--faint);
+      margin-top: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="wordmark">Riél</div>
+    <div class="tagline">Underwriting intelligence for LATAM SMBs</div>
+
+    <!-- Demo one-click login -->
+    <button class="btn btn-demo" id="demo-btn" onclick="demoLogin()">Try demo lender view</button>
+    <div class="demo-note">No sign-up required — explore a sample portfolio instantly.</div>
+    <div class="msg" id="demo-msg"></div>
+
+    <div class="divider">or sign in with your email</div>
+
+    <!-- Magic-link form -->
+    <form id="login-form" onsubmit="requestLink(event)">
+      <label for="email">Work email</label>
+      <input type="email" id="email" placeholder="you@company.com" required autocomplete="email" />
+      <button type="submit" class="btn btn-primary" id="link-btn">Send magic link</button>
+      <div class="msg" id="link-msg"></div>
+    </form>
+  </div>
+
+  <script>
+    async function demoLogin() {
+      const btn = document.getElementById("demo-btn");
+      const msg = document.getElementById("demo-msg");
+      btn.disabled = true;
+      btn.textContent = "Loading…";
+      msg.textContent = "";
+      msg.className = "msg";
+      try {
+        const res = await fetch("/auth/demo-login", { method: "POST" });
+        if (res.redirected) { window.location = res.url; return; }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // Fallback: parse JSON and redirect manually
+        const data = await res.json();
+        window.location = data.redirect || "/dashboard";
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = "Try demo lender view";
+        msg.className = "msg error";
+        msg.textContent = `Failed: ${e.message}`;
+      }
+    }
+
+    async function requestLink(e) {
+      e.preventDefault();
+      const btn = document.getElementById("link-btn");
+      const msg = document.getElementById("link-msg");
+      const email = document.getElementById("email").value.trim();
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      msg.textContent = "";
+      msg.className = "msg";
+      try {
+        const res = await fetch("/lender/login-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        msg.textContent = "Check your email — a sign-in link is on its way.";
+      } catch (e) {
+        msg.className = "msg error";
+        msg.textContent = `Error: ${e.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send magic link";
+      }
+    }
+  </script>
+</body>
+</html>

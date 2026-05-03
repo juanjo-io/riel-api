@@ -35,9 +35,10 @@ load_dotenv()
 
 AUTH_SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "dev-secret-change-in-prod")
 _serializer = URLSafeTimedSerializer(AUTH_SECRET_KEY)
-ALLOWED_LENDER_EMAILS: list = [
-    e.strip() for e in os.getenv("LENDER_EMAILS", "").split(",") if e.strip()
-]
+ALLOWED_LENDER_EMAILS: list = list({
+    "demo@riel.app",
+    *[e.strip() for e in os.getenv("LENDER_EMAILS", "").split(",") if e.strip()],
+})
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -990,6 +991,26 @@ def lender_magic_login(token: str):
 def lender_logout():
     resp = JSONResponse({"message": "Logged out"})
     resp.delete_cookie("lender_session")
+    return resp
+
+
+@app.get("/lender/login")
+def lender_login_page():
+    """Serve the lender login page (magic-link form + demo button)."""
+    return FileResponse(os.path.join(BASE_DIR, "login.html"))
+
+
+@app.post("/auth/demo-login")
+def demo_login():
+    """
+    One-click demo login. Creates a signed lender session for demo@riel.app
+    and redirects to /dashboard. No email or password required.
+    Read-only by convention — no data-mutating routes exist on the lender cookie path.
+    """
+    session_token = _serializer.dumps("demo@riel.app")
+    resp = RedirectResponse(url="/dashboard", status_code=302)
+    resp.set_cookie("lender_session", session_token, httponly=True,
+                    secure=False, max_age=86400, samesite="lax")
     return resp
 
 

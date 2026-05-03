@@ -625,7 +625,7 @@
     const linkId = getLinkId();
     try {
       const res = await fetch(`/dashboard/merchant/${linkId}`);
-      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (res.status === 401) { window.location = "/lender/login"; return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       render(data);
@@ -644,7 +644,7 @@
     errEl.style.display = "none";
     try {
       const res = await fetch(`/argentina/merchant/${linkId}/refresh`, { method: "POST" });
-      if (res.status === 401) { window.location = "/lender/login-request"; return; }
+      if (res.status === 401) { window.location = "/lender/login"; return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       render(data);
